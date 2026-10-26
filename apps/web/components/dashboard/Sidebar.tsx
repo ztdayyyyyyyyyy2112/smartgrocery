@@ -4,15 +4,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import DashboardIcon, { type DashboardIconName } from "./DashboardIcon";
 
-const navigation = [
-  { label: "Overview", href: "/dashboard", icon: "📊" },
-  { label: "Inventory", href: "/dashboard/inventory", icon: "📦" },
-  { label: "Orders", href: "/dashboard/orders", icon: "🧾" },
-  { label: "AI Forecasting", href: "/dashboard/forecasting", icon: "📈" },
-  { label: "Recommendations", href: "/dashboard/recommendations", icon: "🤖" },
-  { label: "Suppliers", href: "/dashboard/suppliers", icon: "🏭" },
-  { label: "Procurement", href: "/dashboard/procurement", icon: "🛒" },
+const navigation: { label: string; href: string; icon: DashboardIconName }[] = [
+  { label: "Overview", href: "/dashboard", icon: "overview" },
+  { label: "Inventory", href: "/dashboard/inventory", icon: "inventory" },
+  { label: "Orders", href: "/dashboard/orders", icon: "orders" },
+  { label: "AI Forecasting", href: "/dashboard/forecasting", icon: "forecasting" },
+  { label: "Recommendations", href: "/dashboard/recommendations", icon: "recommendations" },
+  { label: "Suppliers", href: "/dashboard/suppliers", icon: "suppliers" },
+  { label: "Procurement", href: "/dashboard/procurement", icon: "procurement" },
 ];
 
 export default function Sidebar() {
@@ -32,7 +33,9 @@ export default function Sidebar() {
         aria-controls="dashboard-sidebar"
         onClick={() => setIsOpen((current) => !current)}
       >
-        <span aria-hidden="true" className="text-xl">☰</span>
+        <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
       </button>
 
       <aside
@@ -70,13 +73,22 @@ export default function Sidebar() {
               href={item.href}
               aria-current={isActive(item.href) ? "page" : undefined}
               onClick={() => setIsOpen(false)}
-              className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${
+              className={`flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-medium transition ${
                 isActive(item.href)
-                  ? "bg-primary-light text-primary-dark"
-                  : "text-foreground hover:bg-background hover:text-primary"
+                  ? "border-primary/20 bg-primary-light text-primary-dark"
+                  : "border-border bg-white text-foreground hover:border-primary/40 hover:bg-primary-light/40 hover:text-primary-dark"
               }`}
             >
-              <span aria-hidden="true" className="text-lg">{item.icon}</span>
+              <span
+                aria-hidden="true"
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+                  isActive(item.href)
+                    ? "bg-white text-primary"
+                    : "bg-background text-muted"
+                }`}
+              >
+                <DashboardIcon name={item.icon} />
+              </span>
               {item.label}
             </Link>
           ))}

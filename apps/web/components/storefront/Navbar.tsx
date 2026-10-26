@@ -24,7 +24,7 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-sky-200 bg-primary-light">
+    <header className="sticky top-0 z-50 border-b border-primary-dark bg-primary-dark">
       <div className="sg-container flex min-h-20 items-center gap-4 py-3 md:gap-8">
         <Link
           href="/"
@@ -40,7 +40,7 @@ export default function Navbar() {
             priority
             className="h-10 w-10 object-contain sm:h-12 sm:w-12"
           />
-          <span className="text-lg font-extrabold tracking-tight text-primary-dark sm:text-xl">
+          <span className="text-lg font-extrabold tracking-tight text-white sm:text-xl">
             SmartGrocery
           </span>
         </Link>
@@ -65,13 +65,13 @@ export default function Navbar() {
           <Link
             href="/cart"
             aria-label="Shopping cart"
-            className="rounded-lg px-3 py-2 font-semibold text-primary-dark transition hover:bg-white/70"
+            className="rounded-lg px-3 py-2 font-semibold text-white transition hover:bg-white/10"
           >
             Cart
           </Link>
           <Link
             href="/login"
-            className="rounded-lg bg-primary px-4 py-2.5 font-semibold text-white transition hover:bg-primary-dark"
+            className="rounded-lg bg-white px-4 py-2.5 font-semibold text-primary-dark transition hover:bg-primary-light"
           >
             Login
           </Link>
@@ -91,7 +91,7 @@ export default function Navbar() {
         </button>
       </div>
 
-      <nav aria-label="Main navigation" className="hidden border-t border-sky-200/80 sm:block">
+      <nav aria-label="Main navigation" className="hidden border-t border-white/15 bg-primary sm:block">
         <div className="sg-container flex items-center gap-7 py-2.5">
           {navigation.map((item) => (
             <Link
@@ -99,7 +99,7 @@ export default function Navbar() {
               href={item.href}
               aria-current={isActive(item.href) ? "page" : undefined}
               className={`text-sm font-medium transition-colors ${
-                isActive(item.href) ? "text-primary-dark" : "text-foreground hover:text-primary-dark"
+                isActive(item.href) ? "text-white underline underline-offset-4" : "text-white/85 hover:text-white"
               }`}
             >
               {item.label}
