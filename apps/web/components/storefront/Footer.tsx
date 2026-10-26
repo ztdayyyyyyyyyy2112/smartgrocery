@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const navigation = [
@@ -15,15 +16,22 @@ export default function Footer() {
       <div className="sg-container py-10 md:py-12">
         <div className="grid gap-8 md:grid-cols-[1.3fr_0.7fr_1fr]">
           <div>
-            <div className="flex items-center gap-2">
-              <span
-                aria-hidden="true"
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-black text-white"
-              >
-                S
+            <Link
+              href="/"
+              aria-label="SmartGrocery home"
+              className="inline-flex items-center gap-2"
+            >
+              <Image
+                src="/logo.png"
+                alt=""
+                width={44}
+                height={44}
+                className="h-9 w-9 object-contain"
+              />
+              <span className="text-xl font-extrabold tracking-tight text-primary-dark">
+                SmartGrocery
               </span>
-              <span className="text-xl font-extrabold tracking-tight text-primary-dark">SmartGrocery</span>
-            </div>
+            </Link>
             <p className="mt-4 max-w-md text-sm text-muted">
               SmartGrocery helps households discover quality groceries, manage essentials,
               and explore an intelligent shopping experience built for modern living.

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -27,15 +28,18 @@ export default function Navbar() {
       <div className="sg-container flex min-h-20 items-center gap-4 py-3 md:gap-8">
         <Link
           href="/"
+          aria-label="SmartGrocery home"
           className="flex shrink-0 items-center gap-2"
           onClick={() => setMenuOpen(false)}
         >
-          <span
-            aria-hidden="true"
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-lg font-black text-white"
-          >
-            S
-          </span>
+          <Image
+            src="/logo.png"
+            alt=""
+            width={48}
+            height={48}
+            priority
+            className="h-10 w-10 object-contain sm:h-12 sm:w-12"
+          />
           <span className="text-lg font-extrabold tracking-tight text-primary-dark sm:text-xl">
             SmartGrocery
           </span>
