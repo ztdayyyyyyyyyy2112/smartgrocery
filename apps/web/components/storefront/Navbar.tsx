@@ -11,6 +11,25 @@ const navigation = [
   { label: "Merchant", href: "/dashboard" },
 ];
 
+function CartIcon({ className }: { className: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 3h2l2.4 12.2a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 1.9-1.4L22 8H6" />
+      <circle cx="10" cy="20" r="1" />
+      <circle cx="18" cy="20" r="1" />
+    </svg>
+  );
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -65,9 +84,11 @@ export default function Navbar() {
           <Link
             href="/cart"
             aria-label="Shopping cart"
-            className="rounded-lg px-3 py-2 font-semibold text-white transition hover:bg-white/10"
+            title="Shopping cart"
+            aria-current={pathname === "/cart" ? "page" : undefined}
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-white transition hover:bg-white/10"
           >
-            Cart
+            <CartIcon className="h-7 w-7 text-white" />
           </Link>
           <Link
             href="/login"
@@ -132,10 +153,13 @@ export default function Navbar() {
             ))}
             <Link
               href="/cart"
-              className="rounded-lg px-3 py-2.5 font-medium text-foreground hover:bg-primary-light"
+              aria-label="Shopping cart"
+              aria-current={pathname === "/cart" ? "page" : undefined}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-foreground hover:bg-primary-light"
               onClick={() => setMenuOpen(false)}
             >
-              Cart
+              <CartIcon className="h-5 w-5 text-primary-dark" />
+              <span>Shopping cart</span>
             </Link>
             <Link
               href="/login"
