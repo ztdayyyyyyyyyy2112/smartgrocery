@@ -44,7 +44,12 @@ export default function Sidebar() {
       >
         <div className="flex items-center justify-between gap-3 pb-6">
           <div className="flex items-center gap-3">
-            <span className="text-2xl" aria-hidden="true">🥬</span>
+            <span
+              aria-hidden="true"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-lg font-black text-white"
+            >
+              S
+            </span>
             <div>
               <p className="text-lg font-extrabold text-primary-dark">SmartGrocery</p>
               <p className="text-xs uppercase tracking-[0.2em] text-muted">Merchant</p>

@@ -1,33 +1,37 @@
+import Image from "next/image";
 import { groceryCategories } from "../../lib/mock-data";
 
 export default function CategoryGrid() {
   return (
-    <section className="bg-background py-16 md:py-20">
+    <section className="bg-primary-light/50 py-8 md:py-10">
       <div className="sg-container">
-        <div className="mb-8 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-dark">
-              Categories
-            </p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-foreground">
-              Shop by essentials
-            </h2>
+        <div className="overflow-hidden rounded-xl border border-border bg-white">
+          <h2 className="border-b border-border px-5 py-4 text-lg font-semibold uppercase tracking-wide text-foreground">
+            Categories
+          </h2>
+          <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-3 lg:grid-cols-6">
+            {groceryCategories.map((category, index) => (
+              <article
+                key={category.name}
+                className="flex min-w-0 flex-col items-center bg-white px-3 py-5 text-center transition-colors hover:bg-primary-light/40"
+              >
+                <div className="relative h-20 w-20 overflow-hidden rounded-full bg-primary-light sm:h-24 sm:w-24">
+                  <Image
+                    src={category.imageSrc}
+                    alt={category.name}
+                    fill
+                    loading={index === 0 ? "eager" : "lazy"}
+                    sizes="(max-width: 640px) 80px, 96px"
+                    className="object-cover"
+                  />
+                </div>
+                <h3 className="mt-3 text-sm font-semibold text-foreground sm:text-base">
+                  {category.name}
+                </h3>
+                <p className="mt-1 text-xs text-muted">{category.description}</p>
+              </article>
+            ))}
           </div>
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {groceryCategories.map((category) => (
-            <article
-              key={category.name}
-              className="rounded-2xl border border-border bg-surface p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
-            >
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-light text-3xl shadow-sm">
-                {category.icon}
-              </div>
-              <h3 className="text-xl font-semibold text-foreground">{category.name}</h3>
-              <p className="mt-2 text-sm text-muted">{category.description}</p>
-            </article>
-          ))}
         </div>
       </div>
     </section>

@@ -7,23 +7,47 @@ export type Product = {
   price: number;
   unit: string;
   stock: "In stock" | "Low stock";
-  imageLabel: string;
+  imageSrc: string;
   description: string;
 };
 
 export type Category = {
   name: string;
-  icon: string;
+  imageSrc: string;
   description: string;
 };
 
 export const groceryCategories: Category[] = [
-  { name: "Vegetables", icon: "🥬", description: "Fresh picks" },
-  { name: "Fruits", icon: "🍋", description: "Seasonal favorites" },
-  { name: "Dairy & Eggs", icon: "🥛", description: "Daily essentials" },
-  { name: "Meat & Seafood", icon: "🥩", description: "Protein-rich" },
-  { name: "Beverages", icon: "🥤", description: "Refreshing" },
-  { name: "Pantry Essentials", icon: "🥖", description: "Home staples" },
+  {
+    name: "Vegetables",
+    imageSrc: "/categories/vegetables.jpg",
+    description: "Fresh picks",
+  },
+  {
+    name: "Fruits",
+    imageSrc: "/categories/fruits.jpg",
+    description: "Seasonal favorites",
+  },
+  {
+    name: "Dairy & Eggs",
+    imageSrc: "/categories/dairy-eggs.jpg",
+    description: "Daily essentials",
+  },
+  {
+    name: "Meat & Seafood",
+    imageSrc: "/categories/meat-seafood.jpg",
+    description: "Protein-rich",
+  },
+  {
+    name: "Beverages",
+    imageSrc: "/categories/beverages.jpg",
+    description: "Refreshing",
+  },
+  {
+    name: "Pantry Essentials",
+    imageSrc: "/categories/pantry.jpg",
+    description: "Home staples",
+  },
 ];
 
 export const featuredProducts: Product[] = [
@@ -34,7 +58,7 @@ export const featuredProducts: Product[] = [
     price: 42000,
     unit: "1kg",
     stock: "In stock",
-    imageLabel: "🍅",
+    imageSrc: "/categories/vegetables.jpg",
     description: "Farm-picked and ready for salads, soups, and sauces.",
   },
   {
@@ -44,7 +68,7 @@ export const featuredProducts: Product[] = [
     price: 28000,
     unit: "1kg",
     stock: "In stock",
-    imageLabel: "🥕",
+    imageSrc: "/categories/vegetables.jpg",
     description: "Crisp and naturally sweet for healthy daily meals.",
   },
   {
@@ -54,7 +78,7 @@ export const featuredProducts: Product[] = [
     price: 26000,
     unit: "1 bunch",
     stock: "In stock",
-    imageLabel: "🍌",
+    imageSrc: "/categories/fruits.jpg",
     description: "Naturally sweet and ready for breakfast, smoothies, and snacks.",
   },
   {
@@ -64,7 +88,7 @@ export const featuredProducts: Product[] = [
     price: 36000,
     unit: "1L",
     stock: "Low stock",
-    imageLabel: "🥛",
+    imageSrc: "/categories/dairy-eggs.jpg",
     description: "High-quality dairy milk for coffee, cereals, and family meals.",
   },
   {
@@ -74,7 +98,7 @@ export const featuredProducts: Product[] = [
     price: 48000,
     unit: "10 eggs",
     stock: "In stock",
-    imageLabel: "🥚",
+    imageSrc: "/categories/dairy-eggs.jpg",
     description: "Protein-packed eggs for breakfast, baking, and easy cooking.",
   },
   {
@@ -84,7 +108,7 @@ export const featuredProducts: Product[] = [
     price: 65000,
     unit: "5kg",
     stock: "In stock",
-    imageLabel: "🍚",
+    imageSrc: "/categories/pantry.jpg",
     description: "Long-grain staple rice selected for everyday family meals.",
   },
 ];
