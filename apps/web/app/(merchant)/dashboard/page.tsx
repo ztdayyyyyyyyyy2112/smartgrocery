@@ -1,10 +1,10 @@
 import StatCard from "../../../components/dashboard/StatCard";
 
 const stats = [
-  { label: "Total Products", value: "2,486", change: "+12% vs last month", icon: "📦" },
-  { label: "Active Orders", value: "184", change: "+8% today", icon: "🧾" },
-  { label: "Low Stock Items", value: "27", change: "Needs review", icon: "⚠️" },
-  { label: "Forecast Accuracy", value: "94.8%", change: "+2.4 pts", icon: "📈" },
+  { label: "Total Products", value: "2,486", change: "+12% vs last month", icon: "inventory" as const },
+  { label: "Active Orders", value: "184", change: "+8% today", icon: "orders" as const },
+  { label: "Low Stock Items", value: "27", change: "Needs review", icon: "inventory" as const },
+  { label: "Forecast Accuracy", value: "94.8%", change: "+2.4 pts", icon: "forecasting" as const },
 ];
 
 export default function DashboardOverviewPage() {
