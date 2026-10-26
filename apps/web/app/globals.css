@@ -85,6 +85,15 @@ a {
   text-decoration: none;
 }
 
+:focus-visible {
+  outline: 3px solid rgba(22, 163, 74, 0.45);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: rgba(22, 163, 74, 0.2);
+}
+
 /* Shared container */
 .sg-container {
   width: min(100% - 32px, var(--container-width));
