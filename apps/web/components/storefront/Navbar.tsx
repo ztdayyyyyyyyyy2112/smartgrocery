@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -9,6 +10,25 @@ const navigation = [
   { label: "Products", href: "/products" },
   { label: "Merchant", href: "/dashboard" },
 ];
+
+function CartIcon({ className }: { className: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 3h2l2.4 12.2a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 1.9-1.4L22 8H6" />
+      <circle cx="10" cy="20" r="1" />
+      <circle cx="18" cy="20" r="1" />
+    </svg>
+  );
+}
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -23,44 +43,64 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-white/95 backdrop-blur-sm">
-      <div className="sg-container flex h-20 items-center justify-between gap-6">
-        <Link href="/" className="flex items-center gap-2" onClick={() => setMenuOpen(false)}>
-          <span className="text-2xl" aria-hidden="true">🥬</span>
-          <span className="text-xl font-extrabold tracking-tight text-primary-dark">SmartGrocery</span>
+    <header className="sticky top-0 z-50 border-b border-primary-dark bg-primary-dark">
+      <div className="sg-container flex min-h-20 items-center gap-4 py-3 md:gap-8">
+        <Link
+          href="/"
+          aria-label="SmartGrocery home"
+          className="flex shrink-0 items-center gap-2"
+          onClick={() => setMenuOpen(false)}
+        >
+          <Image
+            src="/logo.png"
+            alt=""
+            width={48}
+            height={48}
+            priority
+            className="h-10 w-10 object-contain sm:h-12 sm:w-12"
+          />
+          <span className="text-lg font-extrabold tracking-tight text-white sm:text-xl">
+            SmartGrocery
+          </span>
         </Link>
 
-        <nav aria-label="Main navigation" className="hidden items-center gap-7 md:flex">
-          {navigation.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={isActive(item.href) ? "page" : undefined}
-              className={`font-medium transition-colors ${
-                isActive(item.href) ? "text-primary" : "text-foreground hover:text-primary"
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        <Link
+          href="/products"
+          aria-label="Browse grocery products"
+          className="flex min-w-0 flex-1 items-center justify-center gap-3 rounded-lg border border-sky-200 bg-white px-3 py-2.5 text-sm text-muted shadow-sm transition hover:border-primary sm:justify-between"
+        >
+          <span className="hidden min-w-0 flex-1 truncate sm:inline">
+            Browse products and categories
+          </span>
+          <span aria-hidden="true" className="flex h-8 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-white">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="10.8" cy="10.8" r="6.8" />
+              <path d="m16 16 4.5 4.5" />
+            </svg>
+          </span>
+        </Link>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden shrink-0 items-center gap-3 sm:flex">
           <Link
             href="/cart"
-            className="rounded-lg border border-border px-4 py-2 font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+            aria-label="Shopping cart"
+            title="Shopping cart"
+            aria-current={pathname === "/cart" ? "page" : undefined}
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-white transition hover:bg-white/10"
           >
-            🛒 Cart
+            <CartIcon className="h-7 w-7 text-white" />
           </Link>
-
-          <Link href="/login" className="rounded-xl bg-primary px-4 py-2.5 font-semibold text-white transition hover:bg-primary-dark">
+          <Link
+            href="/login"
+            className="rounded-lg bg-white px-4 py-2.5 font-semibold text-primary-dark transition hover:bg-primary-light"
+          >
             Login
           </Link>
         </div>
 
         <button
           type="button"
-          className="rounded-lg border border-border p-2.5 md:hidden"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-sky-300 bg-white text-primary-dark sm:hidden"
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           aria-expanded={menuOpen}
           aria-controls="mobile-navigation"
@@ -72,30 +112,60 @@ export default function Navbar() {
         </button>
       </div>
 
+      <nav aria-label="Main navigation" className="hidden border-t border-white/15 bg-primary sm:block">
+        <div className="sg-container flex items-center gap-7 py-2.5">
+          {navigation.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={isActive(item.href) ? "page" : undefined}
+              className={`text-sm font-medium transition-colors ${
+                isActive(item.href) ? "text-white underline underline-offset-4" : "text-white/85 hover:text-white"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </nav>
+
       {menuOpen && (
-        <nav id="mobile-navigation" aria-label="Mobile navigation" className="border-t border-border bg-white md:hidden">
-          <div className="sg-container flex flex-col gap-4 py-5">
+        <nav
+          id="mobile-navigation"
+          aria-label="Mobile navigation"
+          className="border-t border-sky-200 bg-white sm:hidden"
+        >
+          <div className="sg-container flex flex-col gap-1 py-3">
             {navigation.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 aria-current={isActive(item.href) ? "page" : undefined}
-                className={
+                className={`rounded-lg px-3 py-2.5 font-medium ${
                   isActive(item.href)
-                    ? "font-semibold text-primary"
-                    : "font-medium text-foreground hover:text-primary"
-                }
+                    ? "bg-primary-light text-primary-dark"
+                    : "text-foreground hover:bg-primary-light"
+                }`}
                 onClick={() => setMenuOpen(false)}
               >
                 {item.label}
               </Link>
             ))}
-
-            <Link href="/cart" onClick={() => setMenuOpen(false)} className="font-medium text-foreground hover:text-primary">
-              🛒 Cart
+            <Link
+              href="/cart"
+              aria-label="Shopping cart"
+              aria-current={pathname === "/cart" ? "page" : undefined}
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-foreground hover:bg-primary-light"
+              onClick={() => setMenuOpen(false)}
+            >
+              <CartIcon className="h-5 w-5 text-primary-dark" />
+              <span>Shopping cart</span>
             </Link>
-
-            <Link href="/login" onClick={() => setMenuOpen(false)} className="rounded-xl bg-primary px-4 py-2.5 text-center font-semibold text-white hover:bg-primary-dark">
+            <Link
+              href="/login"
+              className="rounded-lg px-3 py-2.5 font-medium text-foreground hover:bg-primary-light"
+              onClick={() => setMenuOpen(false)}
+            >
               Login
             </Link>
           </div>

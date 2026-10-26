@@ -25,7 +25,7 @@ export default function FeaturedProducts() {
               price={product.price}
               unit={product.unit}
               stock={product.stock}
-              imageLabel={product.imageLabel}
+              imageSrc={product.imageSrc}
               description={product.description}
             />
           ))}

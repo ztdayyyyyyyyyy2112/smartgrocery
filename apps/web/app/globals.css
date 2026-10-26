@@ -6,12 +6,12 @@
 
 :root {
   /* Brand colors */
-  --primary: #16a34a;
-  --primary-dark: #15803d;
-  --primary-light: #dcfce7;
+  --primary: #1d4ed8;
+  --primary-dark: #1e3a8a;
+  --primary-light: #dbeafe;
 
   /* Background */
-  --background: #f8faf9;
+  --background: #f5f8ff;
   --surface: #ffffff;
 
   /* Typography */
@@ -86,12 +86,12 @@ a {
 }
 
 :focus-visible {
-  outline: 3px solid rgba(22, 163, 74, 0.45);
+  outline: 3px solid rgba(29, 78, 216, 0.45);
   outline-offset: 3px;
 }
 
 ::selection {
-  background: rgba(22, 163, 74, 0.2);
+  background: rgba(29, 78, 216, 0.2);
 }
 
 /* Shared container */
