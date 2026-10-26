@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -43,18 +44,23 @@ export default function Sidebar() {
         }`}
       >
         <div className="flex items-center justify-between gap-3 pb-6">
-          <div className="flex items-center gap-3">
-            <span
-              aria-hidden="true"
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-lg font-black text-white"
-            >
-              S
-            </span>
+          <Link
+            href="/"
+            aria-label="SmartGrocery home"
+            className="flex items-center gap-3 rounded-lg focus-visible:outline-offset-4"
+          >
+            <Image
+              src="/logo.png"
+              alt=""
+              width={48}
+              height={48}
+              className="h-10 w-10 object-contain"
+            />
             <div>
               <p className="text-lg font-extrabold text-primary-dark">SmartGrocery</p>
               <p className="text-xs uppercase tracking-[0.2em] text-muted">Merchant</p>
             </div>
-          </div>
+          </Link>
         </div>
 
         <nav aria-label="Dashboard navigation" className="space-y-2">
