@@ -16,7 +16,12 @@ export default function Footer() {
         <div className="grid gap-8 md:grid-cols-[1.3fr_0.7fr_1fr]">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-2xl">🥬</span>
+              <span
+                aria-hidden="true"
+                className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-black text-white"
+              >
+                S
+              </span>
               <span className="text-xl font-extrabold tracking-tight text-primary-dark">SmartGrocery</span>
             </div>
             <p className="mt-4 max-w-md text-sm text-muted">
