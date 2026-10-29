@@ -41,6 +41,8 @@ Sau đó mở PR `feat/be-<task-name> -> develop`, ghi rõ chức năng, lệnh 
 - [x] Đọc và đối chiếu ERD tại `docs/architecture/erd.md`.
 - [x] Đọc RBAC tại `docs/architecture/rbac.md`.
 - [x] Đọc REST contract tại `docs/api/rest-api-v1.md`.
+- [x] Chuẩn bị bản draft alignment v2 tại `docs/backend-contract-v2-alignment.md`.
+- [x] Chọn working assumptions và ghi lại trong work log tại `docs/work-log.md`.
 - [ ] Xác nhận với nhóm các enum, trường bắt buộc, trạng thái đơn hàng và quy tắc FEFO.
 - [ ] Xác nhận vị trí migration/seed: `services/api/alembic` hay `database/migrations`.
 - [ ] Ghi lại các điểm contract đã được nhóm chốt trong PR/ticket.
@@ -48,13 +50,13 @@ Sau đó mở PR `feat/be-<task-name> -> develop`, ghi rõ chức năng, lệnh 
 ### 28/10 — FastAPI, PostgreSQL, migrations và seed
 
 - [ ] Tạo/hoàn thiện cấu hình FastAPI và database connection.
-- [ ] Tạo SQLAlchemy models theo ERD.
-- [ ] Tạo migration cho users, stores, categories, products.
-- [ ] Tạo migration cho inventory batches, orders, order items, reservations và idempotency.
+- [x] Tạo SQLAlchemy models nền tảng theo ERD: users, stores, categories, products, inventory batches và stock ledger.
+- [x] Tạo migration cho users, stores, categories, products.
+- [~] Tạo migration cho inventory batches; orders, order items, reservations và idempotency chưa bắt đầu.
 - [ ] Tạo migration cho suppliers, purchase orders, goods receipts.
 - [ ] Tạo migration cho forecasts, recommendations, jobs và business rules.
 - [ ] Tạo seed tối thiểu: user/role, store, categories, products, batches và suppliers.
-- [ ] Chạy migration trên database sạch và kiểm tra rollback cần thiết.
+- [~] Chạy migration trên database sạch thành công; rollback/failure-path còn cần kiểm tra.
 - [ ] Bằng chứng: log migration, kiểm tra bảng/seed và test backend.
 
 ### 29/10 — Authentication, RBAC và Products API
@@ -148,7 +150,7 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 ## Trạng thái hiện tại — 28/10/2026
 
 - `[~]` FastAPI setup, database connection và migration extension đã có trong working tree.
-- `[ ]` Models nghiệp vụ, schema đầy đủ và seed.
+- `[~]` Database foundation đã kết nối và chạy migration extension; migration nghiệp vụ và seed chưa bắt đầu.
 - `[ ]` Authentication/RBAC.
 - `[ ]` Products API.
 - `[ ]` Orders/checkout/reservation.
