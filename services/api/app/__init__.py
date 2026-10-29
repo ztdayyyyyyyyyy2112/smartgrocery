@@ -1,0 +1,1 @@
+"""SmartGrocery FastAPI application package."""
