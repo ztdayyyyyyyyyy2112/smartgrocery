@@ -205,6 +205,36 @@ Nhật ký này ghi lại các phiên làm việc của Tuấn Anh với trợ l
 - [ ] Bổ sung migration orders/reservations/idempotency.
 - [ ] Bổ sung test model/constraint và seed verification.
 
+## 2026-10-29 — Seed dữ liệu catalog và inventory
+
+### Đã làm
+
+- [x] Tạo `services/api/scripts/seed.py`.
+- [x] Seed một store demo, ba categories, ba products và ba inventory batches.
+- [x] Dùng UUID cố định và unique lookup để seed chạy lặp lại không tạo bản ghi trùng.
+- [x] Chạy seed hai lần liên tiếp.
+- [x] Kiểm tra số lượng bản ghi bằng SQLAlchemy.
+
+### Lỗi phát hiện và sửa
+
+- Lần đầu seed lỗi `invalid input value for enum batch_status: "AVAILABLE"`.
+- Nguyên nhân: SQLAlchemy mặc định gửi tên enum Python (`AVAILABLE`) trong khi PostgreSQL contract dùng giá trị lowercase (`available`).
+- Đã thêm `values_callable` cho cả ba enum trong model để ORM gửi đúng contract.
+
+### Kết quả
+
+- Seed lần 1 và lần 2 đều thành công.
+- Counts sau hai lần: 1 store, 3 categories, 3 products, 3 batches.
+- Các batch đọc lại đúng `BatchStatus.AVAILABLE`/`available`.
+- Pytest: `1 passed`.
+- `git diff --check`: không có lỗi.
+
+### Việc còn lại
+
+- [ ] Seed user/role sau khi authentication có password hashing.
+- [ ] Viết test tự động cho seed idempotency và constraints.
+- [ ] Tạo orders, reservations và idempotency schema.
+
 ## 2026-10-29 — Kiểm tra môi trường chạy thử
 
 ### Đã làm
@@ -225,3 +255,161 @@ Nhật ký này ghi lại các phiên làm việc của Tuấn Anh với trợ l
 - Tạo hoặc kích hoạt `services/api/.venv`.
 - Cài `services/api/requirements.txt`.
 - Chạy lại test health trước khi viết model/migration.
+
+## 2026-10-29 — Orders/Checkout foundation: migration 0003
+
+### Đã làm
+
+- [x] Thêm `OrderStatus` với pending, confirmed, cancelled, fulfilled.
+- [x] Tạo models `orders`, `order_items`, `stock_reservations`, `idempotency_keys`.
+- [x] Thêm check constraints cho tiền và quantity dương.
+- [x] Thêm foreign keys và cascade phù hợp cho order items/reservations.
+- [x] Tạo migration `0003_order_checkout_foundation.py`.
+- [x] Chạy migration trên database local và kiểm tra Alembic head.
+- [x] Chạy pytest và `git diff --check`.
+
+### Kết quả
+
+- Alembic current: `0003_orders (head)`.
+- Orders/checkout foundation đã có schema để triển khai transaction và idempotency.
+- Pytest: `1 passed`.
+- Chưa triển khai API checkout, FEFO allocation hoặc reservation transaction; đó là bước business logic kế tiếp.
+-
+## 2026-11-03 — Authentication/RBAC và Products API nền tảng
+
+### Đã làm
+
+- [x] Thêm pwdlib Argon2 và PyJWT vào backend dependencies.
+- [x] Thêm cấu hình JWT secret và TTL vào settings/.env.example.
+- [x] Tạo password hashing bằng Argon2 và access token JWT.
+- [x] Tạo current-user dependency và role guard helper.
+- [x] Implement `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `GET /api/v1/auth/me`.
+- [x] Implement `GET /api/v1/categories` và `GET /api/v1/products` với search/category filter/available quantity.
+- [x] Chạy smoke test register → login → me → categories → products.
+
+### Kết quả
+
+- Register `201`, login `200`, me `200`, categories `200`, products `200` với 3 sản phẩm seed.
+- Pytest: `1 passed`.
+
+### Giới hạn
+
+- Refresh token chưa triển khai vì schema refresh-token chưa có.
+- Role guard chưa gắn vào merchant routes vì inventory/procurement API chưa có.
+- Product detail, pagination và test 401/403/404 còn thiếu.
+
+## 2026-11-03 — Checkout transaction, FEFO reservation và idempotency
+
+### Đã làm
+
+- [x] Tạo `POST /api/v1/orders` yêu cầu Bearer token và `Idempotency-Key`.
+- [x] Kiểm tra product/store và số lượng request.
+- [x] Khóa các inventory batch bằng `SELECT ... FOR UPDATE`.
+- [x] Chọn batch theo expiry date rồi received-at (FEFO).
+- [x] Tạo order, order item và stock reservation trong một transaction.
+- [x] Tăng `quantity_reserved` và ghi `stock_ledger` event `reserve`.
+- [x] Replay cùng idempotency key trả order cũ.
+- [x] Payload khác hoặc user khác với cùng key trả `409`.
+- [x] Thiếu hàng trả `409 STOCK_INSUFFICIENT` và rollback transaction.
+- [x] Thêm tests checkout success, replay, conflict và insufficient stock.
+
+### Kết quả
+
+- Pytest: `5 passed`.
+- Checkout smoke flow chạy được trên PostgreSQL local.
+- Đã rà và sửa transaction boundary sau truy vấn idempotency để không lồng transaction sai.
+
+### Giới hạn còn lại
+
+- Chưa có cancel/fulfil endpoint để release/decrement reservation.
+- Chưa có concurrency test thật với nhiều request đồng thời.
+- Chưa validate expired batch bằng rule engine; hiện chỉ chọn batch status `available`.
+
+## 2026-11-03 — Cancel/fulfil order và expired-batch guard
+
+### Đã làm
+
+- [x] Thêm `POST /api/v1/orders/{order_id}/cancel`.
+- [x] Cancel khóa order/batch, release reservation và ghi ledger event `release`.
+- [x] Customer chỉ cancel được order của mình; merchant/admin có thể xử lý order store.
+- [x] Thêm `POST /api/v1/orders/{order_id}/fulfil` cho merchant/admin.
+- [x] Fulfil giảm on-hand/reserved, chuyển batch về depleted khi hết hàng và ghi ledger event `fulfil`.
+- [x] Loại batch hết hạn khỏi product availability và checkout.
+- [x] Thêm tests cancel release và merchant fulfil.
+
+### Kết quả
+
+- Pytest: `7 passed`.
+- `git diff --check`: không có lỗi.
+- Checkout lifecycle hiện có create → reserve → cancel/release hoặc fulfil.
+
+### Giới hạn còn lại
+
+- Chưa có concurrency test thật với nhiều process/request.
+- Chưa có merchant user seed cố định.
+- Chưa có business rule cấu hình riêng cho expiry warning/low stock.
+
+## 2026-11-03 — Inventory read API và business alerts
+
+### Đã làm
+
+- [x] Tạo rule functions cho `DO_NOT_SELL_EXPIRED`, `EXPIRY_WARNING`, `LOW_STOCK_ALERT`.
+- [x] Tạo `GET /api/v1/inventory` cho merchant/admin.
+- [x] Hỗ trợ lọc `store_id`, `product_id`, `low_stock_only` và threshold cấu hình.
+- [x] Tính on-hand, reserved, available và nearest expiry theo store/product.
+- [x] Loại batch expired khỏi số lượng sellable.
+- [x] Thêm test merchant inventory access và alerts shape.
+
+### Kết quả
+
+- Pytest: `8 passed`.
+- `git diff --check`: không có lỗi.
+- Chưa cần branch mới; vẫn cùng database/inventory foundation.
+
+### Giới hạn còn lại
+
+- Supplier/Purchase Order là module độc lập tiếp theo; trước khi làm sẽ tạo branch mới và báo trước.
+- Reorder point chưa có cột/model; LOW_STOCK_ALERT hiện dùng threshold request.
+
+## 2026-11-03 — Hoàn thiện catalog và auth tests
+
+### Đã làm
+
+- [x] Đổi `GET /api/v1/products` sang response pagination `{items, page, page_size, total}`.
+- [x] Thêm query `q`, `category_id`, `page`, `page_size`.
+- [x] Thêm `GET /api/v1/products/{product_id}`.
+- [x] Bổ sung test pagination, product detail và 404.
+- [x] Bổ sung test register/login/me, missing token và invalid password.
+- [x] Chạy toàn bộ test suite và `git diff --check`.
+
+### Kết quả
+
+- Pytest: `3 passed`.
+- Catalog có 3 sản phẩm seed và available quantity từ inventory batch.
+- Auth test xác nhận access token và 401 cho request thiếu/sai credential.
+
+### Lưu ý
+
+- Đây là thay đổi response của Products API theo contract pagination; frontend cần đọc `response.items` thay vì dùng response list trực tiếp.
+
+## 2026-11-03 — Smoke test server đang chạy
+
+### Đã làm
+
+- [x] Gọi `GET /health` từ PowerShell ngoài tiến trình Uvicorn.
+- [x] Gọi `GET /api/v1/categories`.
+- [x] Gọi `GET /api/v1/products`.
+- [x] Chạy register với email smoke test ngẫu nhiên.
+- [x] Chạy login và xác nhận access token.
+- [x] Gọi `/api/v1/auth/me` với Bearer token.
+- [x] Gọi `/openapi.json` để kiểm tra Swagger route registration.
+
+### Kết quả
+
+- Health: `status=ok`, `database=connected`.
+- Categories: 3 bản ghi.
+- Products: 3 bản ghi.
+- Register: thành công.
+- Login: access token được tạo.
+- Me: trả đúng user smoke test.
+- OpenAPI: có auth, catalog và health routes.
