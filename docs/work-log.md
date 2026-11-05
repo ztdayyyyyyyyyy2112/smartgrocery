@@ -853,4 +853,4 @@ Hai lỗi ban đầu chỉ nằm trong test (format Decimal và detached SQLAlch
 - WebSocket `/ws/events` now subscribes to `smartgrocery:events`.
 - Authenticated merchant/admin connections forward valid JSON events to clients.
 - Subscriber cleanup runs when the connection closes.
-- Verification: realtime tests and full suite pass (`36 passed`).
+- Verification: Redis/WebSocket end-to-end test and full suite pass (`37 passed`).
