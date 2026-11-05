@@ -5,6 +5,8 @@ Intelligent E-Commerce Platform with Knowledge-Based Reasoning, Demand Forecasti
 
 See `services/api/README.md`. Short version:
 
+For the complete PowerShell runbook, see [`docs/backend-runbook.md`](docs/backend-runbook.md).
+
 1. Copy `.env.example` to `.env`
 2. Create PostgreSQL database `smartgrocery` (user/password `smartgrocery`)
 3. `cd services/api` then `python -m venv .venv` and `pip install -r requirements.txt`
