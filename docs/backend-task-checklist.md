@@ -198,6 +198,11 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - `[x]` Bổ sung test inactive-user; toàn bộ test hiện đạt `14 passed`.
 - `[x]` Bổ sung test sparse SKU, zero demand và expired batch; toàn bộ test đạt `29 passed`.
 - `[x]` Security hardening: production JWT secret validation và duplicate-product checkout fix; test suite đạt `32 passed`.
+- `[x]` Bảo vệ forecast result: khóa job, kiểm tra product/horizon và ngăn race completion; test suite vẫn `32 passed`.
+- `[x]` WebSocket yêu cầu JWT, role merchant/admin và giới hạn kết nối; toàn bộ test đạt `33 passed`.
+- `[x]` Thêm request ID và global database/exception handling; toàn bộ test đạt `34 passed`.
+- `[x]` Thêm Redis-backed rate limiting cho register/login; toàn bộ test đạt `35 passed`.
+- `[x]` Thêm migration `0007_hot_query_indexes` cho inventory/order/PO/forecast/recommendation queries.
 - `[~]` Bổ sung hướng dẫn schema backup và release evidence; cần chạy backup thật, lưu artifact an toàn và tạo tag release.
 
 ### Progress update — 2026-11-05 — Backend release status

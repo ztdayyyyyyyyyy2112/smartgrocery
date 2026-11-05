@@ -571,7 +571,46 @@ Nhật ký này ghi lại các phiên làm việc của Tuấn Anh với trợ l
 ### Kết quả
 
 - Toàn bộ test: `32 passed`.
+
+## 2026-11-05 — Security hardening C6 WebSocket
+
+- [x] WebSocket yêu cầu access JWT khi handshake.
+- [x] Chỉ merchant/admin được kết nối.
+- [x] Giới hạn tối đa 100 kết nối process và từ chối khi vượt giới hạn.
+- [x] Bổ sung test authenticated/unauthenticated WebSocket.
+- [x] Toàn bộ test: `33 passed`.
+
+## 2026-11-05 — Observability hardening
+
+- [x] Thêm middleware tạo/bảo toàn `X-Request-ID`.
+- [x] Map IntegrityError thành `409` và OperationalError thành `503`.
+- [x] Chuẩn hóa lỗi nội bộ thành response `500` không lộ stack trace.
+- [x] Bổ sung test request ID; toàn bộ suite đạt `34 passed`.
+
+## 2026-11-05 — Rate limiting auth
+
+- [x] Thêm Redis-backed rate limiter cho register (5/giờ/email).
+- [x] Thêm Redis-backed rate limiter cho login (5/phút/email).
+- [x] Production fail-closed khi rate limiter unavailable; development fail-open để không chặn local.
+- [x] Bổ sung test vượt ngưỡng `429`; toàn bộ suite đạt `35 passed`.
+
+## 2026-11-05 — Hot query indexes
+
+- [x] Thêm migration `0007_hot_query_indexes` cho inventory, orders, purchase orders, forecasts và recommendations.
+- [x] Alembic upgrade `0006 -> 0007` thành công.
+- [x] Toàn bộ test: `35 passed`.
+
+### Blocker cần nhóm xác nhận
+
+- Store-level authorization cần thống nhất bảng/quan hệ `user_stores` trong ERD trước khi triển khai để tránh tự ý đổi contract/schema.
 - Còn tiếp tục: store-level authorization, forecast result protection, rate limiting, WebSocket auth và global observability.
+
+## 2026-11-05 — Security hardening C4 forecast result
+
+- [x] Khóa forecast job bằng `FOR UPDATE` trong transaction.
+- [x] Kiểm tra product active và target date nằm trong job horizon.
+- [x] Giữ job terminal, không cho hoàn tất lại hoặc race completion.
+- [x] Toàn bộ test: `32 passed`.
 
 Hai lỗi ban đầu chỉ nằm trong test (format Decimal và detached SQLAlchemy object), đã sửa và xác nhận lại.
 - Redis broker thật chưa chạy; cần integration test khi nhóm có Redis/Docker ổn định.

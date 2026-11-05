@@ -1,7 +1,7 @@
 from datetime import timedelta
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -10,6 +10,7 @@ from app.core.config import get_settings
 from app.db.session import get_db
 from app.models import User, UserRole
 from app.security import create_token, current_user, hash_password, verify_password
+from app.rate_limit import check_rate_limit
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -31,6 +32,7 @@ def user_response(user: User) -> dict:
 
 @router.post("/register", status_code=201)
 def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> dict:
+    check_rate_limit(f"auth:register:{payload.email}", limit=5, window_seconds=3600)
     if db.scalar(select(User).where(User.email == payload.email)):
         raise HTTPException(status_code=409, detail="Email already registered")
     user = User(email=payload.email, password_hash=hash_password(payload.password), full_name=payload.full_name, role=UserRole.CUSTOMER)
@@ -42,7 +44,8 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> dict:
 
 
 @router.post("/login")
-def login(payload: LoginRequest, db: Session = Depends(get_db)) -> dict:
+def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)) -> dict:
+    check_rate_limit(f"auth:login:{payload.email}", limit=5, window_seconds=60)
     user = db.scalar(select(User).where(User.email == payload.email))
     if user is None or not user.is_active or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
