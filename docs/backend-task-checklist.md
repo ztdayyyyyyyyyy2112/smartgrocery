@@ -192,5 +192,6 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - `[x]` Xác minh database sạch: migrations `0001–0006`, seed và `24 passed` trên `smartgrocery_test`.
 - `[~]` Thêm Celery worker/retry configuration và test; Redis broker integration, scheduled refresh và WebSocket còn tiếp tục.
 - `[x]` Xác minh Redis/Celery integration thực tế: Redis `PONG`, worker ready, outbox task succeeded.
+- `[~]` Thêm Celery Beat schedule và WebSocket `/ws/events`; cần nối broadcast event thực tế và kiểm thử staging.
 - `[x]` Kiểm tra lại toàn bộ test ngày 03/11: `13 passed`; Docker Desktop/WSL vẫn là blocker môi trường, không phải lỗi ứng dụng.
 - `[x]` Bổ sung test inactive-user; toàn bộ test hiện đạt `14 passed`.
