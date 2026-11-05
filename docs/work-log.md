@@ -629,6 +629,20 @@ Nhật ký này ghi lại các phiên làm việc của Tuấn Anh với trợ l
 - `git diff --check`: đạt.
 - Hai cảnh báo còn lại là deprecation/cache warning, không làm fail test.
 
+## 2026-11-05 — Integration E2E checkout → receiving
+
+### Đã làm
+
+- [x] Tạo integration test cho toàn bộ flow checkout → inventory → forecast job → recommendation → PO → receiving.
+- [x] Kiểm tra liên kết giữa recommendation convert và supplier product/unit cost.
+- [x] Chạy test riêng và toàn bộ backend suite.
+
+### Kết quả
+
+- Integration test: `1 passed`.
+- Toàn bộ suite: `21 passed`.
+- `git diff --check`: đạt.
+
 ## 2026-11-05 — Hoàn thiện Recommendation approve/convert-to-PO
 
 ### Đã làm
