@@ -540,6 +540,22 @@ Nhật ký này ghi lại các phiên làm việc của Tuấn Anh với trợ l
 - [x] Chạy toàn bộ test: `24 passed, 1 warning`.
 - [x] Không reset hoặc thay đổi database phát triển `smartgrocery`.
 
+## 2026-11-05 — Khởi tạo Celery worker/retry
+
+### Đã làm
+
+- [x] Thêm Celery + Redis dependency và cấu hình broker/result backend qua environment.
+- [x] Cấu hình `acks_late`, `reject_on_worker_lost`, `track_started` và retry khi worker bị gián đoạn.
+- [x] Thêm task `run_outbox_batch` với backoff/jitter, tối đa 3 lần retry.
+- [x] Bổ sung test cấu hình worker và chạy regression suite.
+
+### Kết quả
+
+- Worker configuration test: passed.
+- Toàn bộ test: `25 passed`.
+- Redis broker thật chưa chạy; cần integration test khi nhóm có Redis/Docker ổn định.
+- Redis broker đã được chạy thực tế bằng Docker; Celery worker connected và `run_outbox_batch` succeeded với `published=12, failed=0`.
+
 ## 2026-11-05 — RBAC/security matrix hardening
 
 ### Đã làm

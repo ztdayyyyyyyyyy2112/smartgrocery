@@ -190,5 +190,7 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - `[~]` Đã bổ sung RBAC matrix cho unauthenticated/customer; tải 50/100/200 request vẫn còn.
 - `[x]` Bổ sung release runbook/evidence: migration, test, smoke endpoint và acceptance flow.
 - `[x]` Xác minh database sạch: migrations `0001–0006`, seed và `24 passed` trên `smartgrocery_test`.
+- `[~]` Thêm Celery worker/retry configuration và test; Redis broker integration, scheduled refresh và WebSocket còn tiếp tục.
+- `[x]` Xác minh Redis/Celery integration thực tế: Redis `PONG`, worker ready, outbox task succeeded.
 - `[x]` Kiểm tra lại toàn bộ test ngày 03/11: `13 passed`; Docker Desktop/WSL vẫn là blocker môi trường, không phải lỗi ứng dụng.
 - `[x]` Bổ sung test inactive-user; toàn bộ test hiện đạt `14 passed`.

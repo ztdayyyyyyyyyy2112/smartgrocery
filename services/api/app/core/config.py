@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     jwt_secret_key: str = "change-this-local-secret"
     jwt_access_token_minutes: int = 15
     jwt_refresh_token_days: int = 7
+    celery_broker_url: str = "redis://localhost:6379/0"
+    celery_result_backend: str = "redis://localhost:6379/1"
     database_url: str = (
         "postgresql://smartgrocery:smartgrocery@localhost:5432/smartgrocery"
     )
