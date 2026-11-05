@@ -561,6 +561,18 @@ Nhật ký này ghi lại các phiên làm việc của Tuấn Anh với trợ l
 - [x] Zero-demand forecast được lưu với predicted quantity 0 và không tạo recommendation giả.
 - [x] Chạy toàn bộ test suite: `29 passed`.
 
+## 2026-11-05 — Security hardening Critical 1/7
+
+- [x] Production settings từ chối JWT default secret hoặc secret ngắn hơn 32 ký tự.
+- [x] JWT dùng `SecretStr` và chỉ lấy giá trị khi ký/giải mã token.
+- [x] Checkout từ chối duplicate `product_id` trong cùng order với HTTP `422`.
+- [x] Bổ sung regression tests cho hai lỗi trên.
+
+### Kết quả
+
+- Toàn bộ test: `32 passed`.
+- Còn tiếp tục: store-level authorization, forecast result protection, rate limiting, WebSocket auth và global observability.
+
 Hai lỗi ban đầu chỉ nằm trong test (format Decimal và detached SQLAlchemy object), đã sửa và xác nhận lại.
 - Redis broker thật chưa chạy; cần integration test khi nhóm có Redis/Docker ổn định.
 - Redis broker đã được chạy thực tế bằng Docker; Celery worker connected và `run_outbox_batch` succeeded với `published=12, failed=0`.

@@ -197,6 +197,7 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - `[x]` Kiểm tra lại toàn bộ test ngày 03/11: `13 passed`; Docker Desktop/WSL vẫn là blocker môi trường, không phải lỗi ứng dụng.
 - `[x]` Bổ sung test inactive-user; toàn bộ test hiện đạt `14 passed`.
 - `[x]` Bổ sung test sparse SKU, zero demand và expired batch; toàn bộ test đạt `29 passed`.
+- `[x]` Security hardening: production JWT secret validation và duplicate-product checkout fix; test suite đạt `32 passed`.
 - `[~]` Bổ sung hướng dẫn schema backup và release evidence; cần chạy backup thật, lưu artifact an toàn và tạo tag release.
 
 ### Progress update — 2026-11-05 — Backend release status
