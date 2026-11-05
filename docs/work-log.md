@@ -848,3 +848,9 @@ Hai lỗi ban đầu chỉ nằm trong test (format Decimal và detached SQLAlch
 - Events are serialized to the `smartgrocery:events` channel with stable metadata and payload.
 - Added a unit test for event serialization and resource cleanup.
 - Verification: `36 passed`; `git diff --check` passed.
+## 2026-11-05 — Redis to WebSocket event stream
+
+- WebSocket `/ws/events` now subscribes to `smartgrocery:events`.
+- Authenticated merchant/admin connections forward valid JSON events to clients.
+- Subscriber cleanup runs when the connection closes.
+- Verification: realtime tests and full suite pass (`36 passed`).
