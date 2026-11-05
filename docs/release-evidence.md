@@ -50,3 +50,10 @@ Results:
 - Seed: completed successfully.
 - Full test suite: `24 passed, 1 warning`.
 - Existing development database was not reset or modified.
+
+## Celery/Redis verification — 2026-11-05
+
+- Redis 7 container `smartgrocery-redis` started on `localhost:6379`.
+- `redis-cli ping` returned `PONG`.
+- Celery worker `v5.5.3` connected to broker/result backend successfully.
+- Worker task `app.worker.run_outbox_batch` completed: `{'published': 12, 'failed': 0}`.
