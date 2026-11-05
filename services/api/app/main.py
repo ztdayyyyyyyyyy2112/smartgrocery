@@ -6,6 +6,8 @@ from app.api.auth import router as auth_router
 from app.api.catalog import router as catalog_router
 from app.api.orders import router as orders_router
 from app.api.inventory import router as inventory_router
+from app.api.procurement import router as procurement_router
+from app.api.forecast import router as forecast_router
 
 app = FastAPI(
     title="SmartGrocery API",
@@ -25,6 +27,8 @@ app.include_router(auth_router, prefix="/api/v1")
 app.include_router(catalog_router, prefix="/api/v1")
 app.include_router(orders_router, prefix="/api/v1")
 app.include_router(inventory_router, prefix="/api/v1")
+app.include_router(procurement_router, prefix="/api/v1")
+app.include_router(forecast_router, prefix="/api/v1")
 
 
 @app.get("/health")
