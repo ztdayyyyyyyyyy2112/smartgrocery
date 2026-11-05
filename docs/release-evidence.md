@@ -57,3 +57,9 @@ Results:
 - `redis-cli ping` returned `PONG`.
 - Celery worker `v5.5.3` connected to broker/result backend successfully.
 - Worker task `app.worker.run_outbox_batch` completed: `{'published': 12, 'failed': 0}`.
+
+## Schema backup readiness — 2026-11-05
+
+- `pg_dump.exe` and `pg_restore.exe` are installed under PostgreSQL 18.
+- Reproducible schema-only and custom-format backup commands are documented in `docs/schema-backup.md`.
+- Backup artifacts must remain outside Git and use approved secure storage.
