@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # services/api/app/core/config.py -> repository root is 4 levels up
@@ -17,7 +18,7 @@ class Settings(BaseSettings):
     )
 
     app_env: str = "development"
-    jwt_secret_key: str = "change-this-local-secret"
+    jwt_secret_key: SecretStr = SecretStr("change-this-local-secret")
     jwt_access_token_minutes: int = 15
     jwt_refresh_token_days: int = 7
     celery_broker_url: str = "redis://localhost:6379/0"
@@ -25,6 +26,14 @@ class Settings(BaseSettings):
     database_url: str = (
         "postgresql://smartgrocery:smartgrocery@localhost:5432/smartgrocery"
     )
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self):
+        if self.app_env.lower() == "production":
+            secret = self.jwt_secret_key.get_secret_value()
+            if secret == "change-this-local-secret" or len(secret) < 32:
+                raise ValueError("JWT_SECRET_KEY must be at least 32 characters in production")
+        return self
 
     @property
     def sqlalchemy_url(self) -> str:

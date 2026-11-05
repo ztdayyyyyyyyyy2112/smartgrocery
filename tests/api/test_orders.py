@@ -51,6 +51,12 @@ def test_checkout_rejects_insufficient_stock() -> None:
     assert response.status_code == 409
 
 
+def test_checkout_rejects_duplicate_product_lines() -> None:
+    headers = {"Authorization": f"Bearer {_token()}", "Idempotency-Key": f"test-{uuid4().hex}"}
+    response = client.post("/api/v1/orders", json={"store_id": STORE_ID, "items": [{"product_id": MILK_ID, "quantity": "1"}, {"product_id": MILK_ID, "quantity": "1"}]}, headers=headers)
+    assert response.status_code == 422
+
+
 def test_cancel_releases_reservation() -> None:
     headers = {"Authorization": f"Bearer {_token()}", "Idempotency-Key": f"test-{uuid4().hex}"}
     response = client.post("/api/v1/orders", json={"store_id": STORE_ID, "items": [{"product_id": MILK_ID, "quantity": "1"}]}, headers=headers)

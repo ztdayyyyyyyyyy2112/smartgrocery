@@ -26,13 +26,13 @@ def verify_password(password: str, hashed: str) -> bool:
 def create_token(user: User, *, token_type: str, expires_delta: timedelta) -> str:
     now = datetime.now(timezone.utc)
     payload = {"sub": str(user.id), "role": user.role.value, "type": token_type, "iat": now, "exp": now + expires_delta}
-    return jwt.encode(payload, get_settings().jwt_secret_key, algorithm="HS256")
+    return jwt.encode(payload, get_settings().jwt_secret_key.get_secret_value(), algorithm="HS256")
 
 
 def current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     credentials_error = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication credentials")
     try:
-        payload = jwt.decode(token, get_settings().jwt_secret_key, algorithms=["HS256"])
+        payload = jwt.decode(token, get_settings().jwt_secret_key.get_secret_value(), algorithms=["HS256"])
         user_id = payload.get("sub")
         if payload.get("type") != "access" or not user_id:
             raise credentials_error

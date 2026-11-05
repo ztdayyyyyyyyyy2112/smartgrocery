@@ -1,4 +1,9 @@
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, Request, WebSocket
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError, OperationalError
+from uuid import uuid4
+import jwt
+from app.core.config import get_settings
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.session import database_is_connected
@@ -15,6 +20,22 @@ app = FastAPI(
     version="0.1.0",
     description="Backend for catalog, orders, inventory, and procurement.",
 )
+
+
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    request_id = request.headers.get("X-Request-ID") or str(uuid4())
+    request.state.request_id = request_id
+    try:
+        response = await call_next(request)
+    except IntegrityError:
+        response = JSONResponse(status_code=409, content={"detail": "Database constraint violated"})
+    except OperationalError:
+        response = JSONResponse(status_code=503, content={"detail": "Database temporarily unavailable"})
+    except Exception:
+        response = JSONResponse(status_code=500, content={"detail": "Internal server error"})
+    response.headers["X-Request-ID"] = request_id
+    return response
 
 # The Next.js app runs on port 3000 during development.
 app.add_middleware(
@@ -34,6 +55,17 @@ app.include_router(forecast_router, prefix="/api/v1")
 
 @app.websocket("/ws/events")
 async def events_websocket(websocket: WebSocket):
+    token = websocket.query_params.get("access_token")
+    if not token:
+        await websocket.close(code=1008, reason="Authentication required")
+        return
+    try:
+        payload = jwt.decode(token, get_settings().jwt_secret_key.get_secret_value(), algorithms=["HS256"])
+        if payload.get("type") != "access" or payload.get("role") not in {"merchant", "admin"}:
+            raise ValueError("invalid websocket role")
+    except (jwt.PyJWTError, ValueError):
+        await websocket.close(code=1008, reason="Invalid authentication")
+        return
     await manager.connect(websocket)
     try:
         while True:

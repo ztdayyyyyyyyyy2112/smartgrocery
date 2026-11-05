@@ -53,6 +53,8 @@ def create_order(payload: CreateOrderRequest, idempotency_key: str = Header(...,
     try:
         with db.begin():
             product_ids = [line.product_id for line in payload.items]
+            if len(product_ids) != len(set(product_ids)):
+                raise HTTPException(status_code=422, detail="Duplicate product_id is not allowed")
             products = {product.id: product for product in db.scalars(select(Product).where(Product.id.in_(product_ids), Product.is_active.is_(True))).all()}
             if len(products) != len(set(product_ids)):
                 raise HTTPException(status_code=404, detail="Product not found")

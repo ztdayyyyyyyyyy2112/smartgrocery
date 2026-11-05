@@ -2,10 +2,14 @@ from fastapi import WebSocket
 
 
 class ConnectionManager:
-    def __init__(self) -> None:
+    def __init__(self, max_connections: int = 100) -> None:
         self.active: list[WebSocket] = []
+        self.max_connections = max_connections
 
     async def connect(self, websocket: WebSocket) -> None:
+        if len(self.active) >= self.max_connections:
+            await websocket.close(code=1013, reason="Connection limit reached")
+            return
         await websocket.accept()
         self.active.append(websocket)
 
