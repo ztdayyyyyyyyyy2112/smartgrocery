@@ -532,6 +532,14 @@ Nhật ký này ghi lại các phiên làm việc của Tuấn Anh với trợ l
 - Pytest: `14 passed`.
 - `git diff --check`: đạt.
 
+## 2026-11-05 — Xác minh database sạch cho release
+
+- [x] Tạo database PostgreSQL riêng `smartgrocery_test`.
+- [x] Chạy thành công migrations từ `0001` đến `0006`.
+- [x] Chạy seed trên database mới.
+- [x] Chạy toàn bộ test: `24 passed, 1 warning`.
+- [x] Không reset hoặc thay đổi database phát triển `smartgrocery`.
+
 ## 2026-11-05 — RBAC/security matrix hardening
 
 ### Đã làm
