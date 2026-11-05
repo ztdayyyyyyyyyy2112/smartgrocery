@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -25,7 +26,7 @@ def verify_password(password: str, hashed: str) -> bool:
 
 def create_token(user: User, *, token_type: str, expires_delta: timedelta) -> str:
     now = datetime.now(timezone.utc)
-    payload = {"sub": str(user.id), "role": user.role.value, "type": token_type, "iat": now, "exp": now + expires_delta}
+    payload = {"sub": str(user.id), "role": user.role.value, "type": token_type, "jti": str(uuid4()), "iat": now, "exp": now + expires_delta}
     return jwt.encode(payload, get_settings().jwt_secret_key.get_secret_value(), algorithm="HS256")
 
 

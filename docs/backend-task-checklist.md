@@ -214,3 +214,4 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - `[x]` Schema-only backup đã tạo bằng PostgreSQL 18.6 và release tag `v1.0.0` đã xác nhận trên GitHub.
 - `[x]` Backend runbook `docs/backend-runbook.md` đã bổ sung và liên kết từ README.
 - `[~]` Còn cần: nối broadcast event thật tới frontend, test business endpoint dưới tải, và hoàn thiện tài liệu báo cáo nhóm.
+- [x] Refresh token rotation: persisted hashed tokens, expiry/revocation checks, and regression coverage (`35 passed`).

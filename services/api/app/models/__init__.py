@@ -27,6 +27,7 @@ from app.models.entities import (
     RecommendationStatus,
     Store,
     User,
+    RefreshToken,
     UserRole,
 )
 
@@ -57,5 +58,6 @@ __all__ = [
     "RecommendationStatus",
     "Store",
     "User",
+    "RefreshToken",
     "UserRole",
 ]
