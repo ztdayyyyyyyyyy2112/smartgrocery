@@ -196,3 +196,4 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - `[~]` Thêm Celery Beat schedule và WebSocket `/ws/events`; cần nối broadcast event thực tế và kiểm thử staging.
 - `[x]` Kiểm tra lại toàn bộ test ngày 03/11: `13 passed`; Docker Desktop/WSL vẫn là blocker môi trường, không phải lỗi ứng dụng.
 - `[x]` Bổ sung test inactive-user; toàn bộ test hiện đạt `14 passed`.
+- `[x]` Bổ sung test sparse SKU, zero demand và expired batch; toàn bộ test đạt `29 passed`.

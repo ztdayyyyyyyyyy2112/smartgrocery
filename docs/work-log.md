@@ -553,6 +553,15 @@ Nhật ký này ghi lại các phiên làm việc của Tuấn Anh với trợ l
 
 - Worker configuration test: passed.
 - Toàn bộ test: `25 passed`.
+
+## 2026-11-05 — Edge-case tests
+
+- [x] Expired batch không xuất hiện trong available quantity.
+- [x] Sparse SKU không có inventory trả available quantity bằng 0.
+- [x] Zero-demand forecast được lưu với predicted quantity 0 và không tạo recommendation giả.
+- [x] Chạy toàn bộ test suite: `29 passed`.
+
+Hai lỗi ban đầu chỉ nằm trong test (format Decimal và detached SQLAlchemy object), đã sửa và xác nhận lại.
 - Redis broker thật chưa chạy; cần integration test khi nhóm có Redis/Docker ổn định.
 - Redis broker đã được chạy thực tế bằng Docker; Celery worker connected và `run_outbox_batch` succeeded với `published=12, failed=0`.
 
