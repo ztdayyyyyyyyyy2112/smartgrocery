@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Badge from "../ui/Badge";
 import Button from "../ui/Button";
 
@@ -8,7 +7,7 @@ export type ProductCardProps = {
   price: number;
   unit: string;
   stock: "In stock" | "Low stock";
-  imageSrc: string;
+  imageLabel: string;
   description: string;
 };
 
@@ -18,22 +17,16 @@ export default function ProductCard({
   price,
   unit,
   stock,
-  imageSrc,
+  imageLabel,
   description,
 }: ProductCardProps) {
   return (
     <article className="flex h-full flex-col rounded-2xl border border-border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-primary-light">
-        <Image
-          src={imageSrc}
-          alt={name}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-          className="object-cover"
-        />
-        <div className="absolute right-3 top-3">
-          <Badge tone={stock === "In stock" ? "success" : "warning"}>{stock}</Badge>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-light text-4xl shadow-sm">
+          {imageLabel}
         </div>
+        <Badge tone={stock === "In stock" ? "success" : "warning"}>{stock}</Badge>
       </div>
 
       <div className="mt-5 flex-1">
