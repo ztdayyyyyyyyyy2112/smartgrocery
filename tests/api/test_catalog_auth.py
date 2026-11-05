@@ -1,6 +1,9 @@
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 
 from app.main import app
+from app.db.session import SessionLocal
+from app.models import User
 
 client = TestClient(app)
 
@@ -31,3 +34,15 @@ def test_register_login_and_invalid_auth() -> None:
     assert client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}).status_code == 200
     assert client.get("/api/v1/auth/me").status_code == 401
     assert client.post("/api/v1/auth/login", json={"email": email, "password": "wrong-password"}).status_code == 401
+
+
+def test_inactive_user_cannot_login() -> None:
+    email = "inactive-auth-test@example.com"
+    register = client.post("/api/v1/auth/register", json={"email": email, "password": "password123", "full_name": "Inactive Test"})
+    assert register.status_code in {201, 409}
+    with SessionLocal() as db:
+        user = db.scalar(select(User).where(User.email == email))
+        assert user is not None
+        user.is_active = False
+        db.commit()
+    assert client.post("/api/v1/auth/login", json={"email": email, "password": "password123"}).status_code == 401

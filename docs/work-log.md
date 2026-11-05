@@ -371,6 +371,92 @@ Nhật ký này ghi lại các phiên làm việc của Tuấn Anh với trợ l
 - Supplier/Purchase Order là module độc lập tiếp theo; trước khi làm sẽ tạo branch mới và báo trước.
 - Reorder point chưa có cột/model; LOW_STOCK_ALERT hiện dùng threshold request.
 
+## 2026-11-03 — Procurement schema foundation
+
+### Đã làm
+
+- [x] Tạo models `suppliers` và `supplier_products`.
+- [x] Tạo `PurchaseOrderStatus` theo lifecycle draft → approval → sent → receiving.
+- [x] Tạo models `purchase_orders`, `purchase_order_items` và `goods_receipts`.
+- [x] Thêm migration `0004_procurement`.
+- [x] Chạy migration trên PostgreSQL local.
+- [x] Chạy toàn bộ test suite và `git diff --check`.
+
+### Kết quả
+
+- Alembic current: `0004_procurement (head)`.
+- Pytest: `8 passed`.
+- Chưa có procurement API; lượt tiếp theo sẽ làm supplier/PO endpoints và state transition tests.
+
+## 2026-11-03 — Procurement API và receiving workflow
+
+### Đã làm
+
+- [x] `GET/POST /api/v1/suppliers` cho merchant/admin.
+- [x] `POST /api/v1/purchase-orders` với trạng thái `pending_approval`.
+- [x] `GET /api/v1/purchase-orders`.
+- [x] Approval transition: `pending_approval → approved`.
+- [x] Send transition: `approved → sent`.
+- [x] Receiving transition từ `sent/partially_received`.
+- [x] Receiving tạo goods receipt, inventory batch và stock ledger event `receive` trong cùng transaction.
+- [x] Kiểm tra quantity received không vượt quantity ordered.
+- [x] Thêm integration test cho toàn bộ PO lifecycle.
+
+### Lỗi phát hiện và sửa
+
+- FastAPI không thể dùng SQLAlchemy model làm response type trực tiếp.
+- Đã thêm `SupplierResponse` Pydantic schema với `from_attributes`.
+
+### Kết quả
+
+- Pytest: `9 passed`.
+- `git diff --check`: không có lỗi.
+
+### Giới hạn còn lại
+
+- Chưa có cancel PO endpoint.
+- Chưa có supplier product CRUD endpoint.
+- Chưa có receiving partial-flow test riêng.
+
+## 2026-11-03 — Hoàn thiện procurement state transitions
+
+### Đã làm
+
+- [x] Thêm `PUT/GET /api/v1/suppliers/{supplier_id}/products`.
+- [x] Thêm `POST /api/v1/purchase-orders/{po_id}/cancel`.
+- [x] Chặn cancel PO sau khi đã nhận một phần/toàn bộ.
+- [x] Thêm test receiving một phần và kiểm tra trạng thái `partially_received`.
+- [x] Thêm test supplier product upsert/list.
+- [x] Thêm test cancel PO.
+
+### Kết quả
+
+- Pytest: `11 passed`.
+- `git diff --check`: không có lỗi.
+- Procurement P0 hiện đã có supplier, supplier product, PO create/list/approve/send/cancel/receive.
+
+### Giới hạn còn lại
+
+- Chưa có API PATCH supplier.
+- Chưa có test quyền 403 riêng cho toàn bộ procurement routes.
+- Chưa có background receiving event/outbox.
+
+## 2026-11-03 — Procurement permission and transition regression tests
+
+### Đã làm
+
+- [x] Test customer bị từ chối truy cập supplier (`403`).
+- [x] Test PO send khi chưa approve bị từ chối (`409`).
+- [x] Kiểm tra danh sách procurement routes được đăng ký trong FastAPI.
+- [x] Chạy lại toàn bộ test suite.
+
+### Kết quả
+
+- Pytest: `13 passed`.
+- Procurement routes được đăng ký đầy đủ.
+- Một lệnh kiểm tra route ban đầu chạy sai thư mục và báo `ModuleNotFoundError: app`; đã chạy lại đúng trong `services/api`, không phải lỗi ứng dụng.
+- `git diff --check`: không có lỗi.
+
 ## 2026-11-03 — Hoàn thiện catalog và auth tests
 
 ### Đã làm
@@ -413,3 +499,104 @@ Nhật ký này ghi lại các phiên làm việc của Tuấn Anh với trợ l
 - Login: access token được tạo.
 - Me: trả đúng user smoke test.
 - OpenAPI: có auth, catalog và health routes.
+
+## 2026-11-03 — Kiểm tra workflow sau khi Docker Desktop gặp lỗi WSL
+
+### Đã làm
+
+- [x] Kiểm tra branch và thay đổi hiện tại: đang ở `feat/be-procurement`, các thay đổi procurement vẫn chưa commit.
+- [x] Xác nhận PostgreSQL Windows đang chạy để không làm gián đoạn backend.
+- [x] Chạy toàn bộ test từ thư mục root bằng virtualenv của API.
+- [x] Kiểm tra Docker Engine; Docker CLI chưa kết nối được do lỗi Docker Desktop/WSL và quyền truy cập pipe.
+
+### Kết quả
+
+- Pytest: `13 passed`.
+- Có 2 cảnh báo không làm fail test: cảnh báo deprecation của Starlette và pytest cache path.
+- Không phát hiện lỗi test ứng dụng trong lần kiểm tra này.
+
+### Blocker / hỗ trợ cần thiết
+
+- Docker Desktop hiện chưa hoạt động ổn định sau lỗi `componentsVersion.json`/WSL. Không thực hiện reset hoặc unregister WSL để tránh mất dữ liệu.
+- Có thể tiếp tục phát triển bằng PostgreSQL Windows; khi cần Docker, người dùng cần Restart/Repair Docker Desktop rồi kiểm tra lại `docker info`.
+
+## 2026-11-03 — Bổ sung kiểm thử inactive-user
+
+### Đã làm
+
+- [x] Bổ sung regression test xác nhận tài khoản bị vô hiệu hóa không thể đăng nhập.
+- [x] Chạy lại toàn bộ test suite và kiểm tra diff formatting.
+
+### Kết quả
+
+- Pytest: `14 passed`.
+- `git diff --check`: đạt.
+- Hai cảnh báo hiện tại vẫn là cảnh báo môi trường/deprecation, không làm fail test.
+
+### Bước tiếp theo
+
+- Tiếp tục triển khai outbox/event model cho các nghiệp vụ order, inventory và procurement.
+
+## 2026-11-03 — Triển khai transactional outbox
+
+### Đã làm
+
+- [x] Thêm model `OutboxEvent` với trạng thái publish, số lần retry và payload JSONB.
+- [x] Thêm migration `0005_outbox` và chạy thành công trên database hiện tại.
+- [x] Thêm helper `enqueue_event()` để ghi event trong cùng transaction nghiệp vụ.
+- [x] Tích hợp event cho order confirmed/cancelled/fulfilled và purchase-order created/status/cancelled/received.
+- [x] Chạy toàn bộ test suite và `git diff --check`.
+
+### Kết quả
+
+- Alembic: `0004_procurement -> 0005_outbox` thành công.
+- Pytest: `14 passed`.
+- Chưa có worker publish/retry; hiện outbox đã sẵn sàng làm nguồn dữ liệu cho background worker tiếp theo.
+
+## 2026-11-03 — Bổ sung polling worker cho outbox
+
+### Đã làm
+
+- [x] Thêm `publish_pending_events()` với batch limit, `FOR UPDATE SKIP LOCKED`, attempts và retry an toàn.
+- [x] Thêm script `services/api/scripts/publish_outbox.py` để chạy một lượt bằng Task Scheduler/cron.
+- [x] Sửa import path để script chạy trực tiếp từ thư mục API.
+
+### Kết quả
+
+- Worker chạy thành công: `outbox published=32 failed=0`.
+- Test suite vẫn đạt `14 passed`.
+- `git diff --check`: đạt.
+
+### Giới hạn hiện tại
+
+- `noop_publisher` mới là adapter cục bộ; cần nối message broker/webhook thật khi nhóm thống nhất hạ tầng tích hợp.
+
+## 2026-11-03 — Kiểm thử retry outbox
+
+### Đã làm
+
+- [x] Thêm test publish thành công: event được đánh dấu `published_at` và tăng attempts.
+- [x] Thêm test publisher lỗi: event giữ pending để retry và attempts được ghi nhận.
+- [x] Xử lý dữ liệu pending cũ trong test để kết quả ổn định.
+
+### Kết quả
+
+- Pytest: `16 passed`.
+- `git diff --check`: đạt.
+- Không còn lỗi cần hỗ trợ.
+
+## 2026-11-05 — Khởi tạo Forecast/Job API trên branch `feat/be-forecast-jobs`
+
+### Đã làm
+
+- [x] Tạo migration `0006_forecast_jobs` cho jobs, demand forecasts và replenishment recommendations.
+- [x] Thêm model và enum trạng thái queued/running/succeeded/failed, pending/approved/rejected/converted.
+- [x] Thêm `POST /jobs/forecasts` và `GET /jobs/{job_id}` với RBAC merchant/admin.
+- [x] Thêm `GET /forecasts`, `GET /recommendations`, approve/reject recommendation.
+- [x] Thêm test customer bị từ chối và merchant queue/poll job.
+
+### Kết quả
+
+- Alembic `0005_outbox -> 0006_forecast_jobs`: thành công.
+- Pytest: `18 passed`.
+- Chưa tự sinh forecast khi chưa có worker inference; job mới dừng ở trạng thái `queued` đúng contract.
