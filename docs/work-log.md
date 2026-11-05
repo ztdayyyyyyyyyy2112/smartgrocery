@@ -842,3 +842,9 @@ Hai lỗi ban đầu chỉ nằm trong test (format Decimal và detached SQLAlch
 - Added `/api/v1/auth/refresh` with rotation and revocation of the previous token.
 - Added unique JWT `jti` claims to prevent token hash collisions on rapid issuance.
 - Verification: Alembic upgrade succeeded; `35 passed`; `git diff --check` passed.
+## 2026-11-05 — Redis outbox publisher
+
+- Replaced the Celery outbox task's no-op publisher with a Redis publisher.
+- Events are serialized to the `smartgrocery:events` channel with stable metadata and payload.
+- Added a unit test for event serialization and resource cleanup.
+- Verification: `36 passed`; `git diff --check` passed.
