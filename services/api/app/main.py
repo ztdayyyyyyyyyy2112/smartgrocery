@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, OperationalError
 from uuid import uuid4
 import jwt
-from redis import Redis
+from redis import asyncio as redis_asyncio
 from app.core.config import get_settings
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -72,24 +72,28 @@ async def events_websocket(websocket: WebSocket):
         await websocket.close(code=1008, reason="Invalid authentication")
         return
     await manager.connect(websocket)
-    subscriber = Redis.from_url(get_settings().celery_broker_url, decode_responses=True).pubsub()
-    subscriber.subscribe(EVENTS_CHANNEL)
-    try:
+    redis_client = redis_asyncio.from_url(get_settings().celery_broker_url, decode_responses=True)
+    subscriber = redis_client.pubsub()
+    await subscriber.subscribe(EVENTS_CHANNEL)
+    async def forward_events() -> None:
         while True:
-            try:
-                await asyncio.wait_for(websocket.receive_text(), timeout=0.25)
-            except asyncio.TimeoutError:
-                pass
-            message = await asyncio.to_thread(subscriber.get_message, True, 0.01)
+            message = await subscriber.get_message(ignore_subscribe_messages=True, timeout=1.0)
             if message and message.get("type") == "message":
                 try:
                     await websocket.send_json(json.loads(message["data"]))
                 except (TypeError, json.JSONDecodeError):
                     continue
+
+    event_task = asyncio.create_task(forward_events())
+    try:
+        while True:
+            await websocket.receive_text()
     except Exception:
         manager.disconnect(websocket)
     finally:
-        subscriber.close()
+        event_task.cancel()
+        await subscriber.aclose()
+        await redis_client.aclose()
 
 
 @app.get("/health")
