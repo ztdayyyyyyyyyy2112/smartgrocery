@@ -531,6 +531,47 @@ Nhật ký này ghi lại các phiên làm việc của Tuấn Anh với trợ l
 
 - Pytest: `14 passed`.
 - `git diff --check`: đạt.
+
+## 2026-11-05 — RBAC/security matrix hardening
+
+### Đã làm
+
+- [x] Kiểm tra endpoint merchant-only khi thiếu token trả `401`.
+- [x] Kiểm tra customer truy cập inventory/forecast/supplier bị từ chối `403`.
+- [x] Chạy lại toàn bộ test suite.
+
+### Kết quả
+
+- Toàn bộ test: `24 passed`.
+- `git diff --check`: đạt.
+
+## 2026-11-05 — Hardening tests trên branch `feat/be-hardening-tests`
+
+### Đã làm
+
+- [x] Bổ sung test job failure thiếu `error_message` trả `422`.
+- [x] Bổ sung test job terminal không thể complete lại sau khi đã `failed`.
+- [x] Chạy lại toàn bộ test suite và kiểm tra diff.
+
+### Kết quả
+
+- Pytest: `22 passed`.
+- `git diff --check`: đạt.
+- Concurrency test thực tế vẫn cần chạy riêng với nhiều session PostgreSQL; chưa tự giả lập bằng dữ liệu dùng chung.
+
+## 2026-11-05 — Concurrency checkout hardening
+
+### Đã làm
+
+- [x] Tạo test với hai PostgreSQL session/requests đồng thời trên SKU chỉ có 1 đơn vị tồn kho.
+- [x] Xác nhận cơ chế `SELECT ... FOR UPDATE` ngăn oversell: một request thành công, một request `409 STOCK_INSUFFICIENT`.
+- [x] Chạy lại toàn bộ suite.
+
+### Kết quả
+
+- Concurrency test: `1 passed`.
+- Toàn bộ test: `23 passed`.
+- `git diff --check`: đạt.
 - Hai cảnh báo hiện tại vẫn là cảnh báo môi trường/deprecation, không làm fail test.
 
 ### Bước tiếp theo
