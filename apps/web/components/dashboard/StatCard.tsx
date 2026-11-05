@@ -1,19 +1,17 @@
-import DashboardIcon, { type DashboardIconName } from "./DashboardIcon";
-
 type StatCardProps = {
   label: string;
   value: string;
   change: string;
-  icon: DashboardIconName;
+  icon: string;
 };
 
 export default function StatCard({ label, value, change, icon }: StatCardProps) {
   return (
-    <article className="rounded-2xl border border-border bg-white p-5 shadow-sm transition hover:border-primary/30 hover:shadow-md">
+    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-medium text-muted">{label}</p>
-        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-light text-primary-dark">
-          <DashboardIcon name={icon} className="h-5 w-5" />
+        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-light text-xl">
+          {icon}
         </span>
       </div>
 
@@ -22,6 +20,6 @@ export default function StatCard({ label, value, change, icon }: StatCardProps) 
       </div>
 
       <p className="mt-4 text-sm font-medium text-primary-dark">{change}</p>
-    </article>
+    </div>
   );
 }
