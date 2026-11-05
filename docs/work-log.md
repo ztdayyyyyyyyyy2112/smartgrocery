@@ -765,3 +765,22 @@ Hai lỗi ban đầu chỉ nằm trong test (format Decimal và detached SQLAlch
 
 - Pytest: `20 passed`.
 - `git diff --check`: đạt.
+
+## 2026-11-05 — Cập nhật tiến độ tổng thể
+
+### Đã hoàn thành
+
+- Backend core, procurement, outbox, forecast/job, recommendation và integration E2E đã merge vào `develop`.
+- Celery/Redis worker đã chạy thực tế; outbox task xử lý thành công.
+- Celery Beat schedule và WebSocket endpoint đã có test.
+- Load test `/health` 50/100/200 request đạt 100% success; p99 cao nhất `217.17 ms`.
+- Edge-case suite và hardening suite đã nâng tổng kiểm thử lên `29 passed`.
+- Database sạch đã chạy migration/seed thành công; schema backup PostgreSQL 18.6 đã tạo.
+- Release tag `v1.0.0` đã xác nhận trên GitHub.
+- Đã tạo backend runbook tại `docs/backend-runbook.md`.
+
+### Còn lại
+
+- Nối broadcast event thật từ outbox tới frontend/WebSocket.
+- Nếu cần production evidence: load test trên business endpoint và staging.
+- Hoàn thiện nội dung báo cáo nhóm, sơ đồ/logs và phần limitations.

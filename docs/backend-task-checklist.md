@@ -198,3 +198,13 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - `[x]` Bổ sung test inactive-user; toàn bộ test hiện đạt `14 passed`.
 - `[x]` Bổ sung test sparse SKU, zero demand và expired batch; toàn bộ test đạt `29 passed`.
 - `[~]` Bổ sung hướng dẫn schema backup và release evidence; cần chạy backup thật, lưu artifact an toàn và tạo tag release.
+
+### Progress update — 2026-11-05 — Backend release status
+
+- `[x]` Celery/Redis integration thực tế: worker online, outbox task thành công.
+- `[x]` Celery Beat schedule và WebSocket endpoint `/ws/events` đã có test.
+- `[x]` Load test `/health`: 50/100/200 request, 100% success; p99 cao nhất `217.17 ms`.
+- `[x]` Edge-case tests: expired batch, sparse SKU, zero demand; toàn bộ suite `29 passed`.
+- `[x]` Schema-only backup đã tạo bằng PostgreSQL 18.6 và release tag `v1.0.0` đã xác nhận trên GitHub.
+- `[x]` Backend runbook `docs/backend-runbook.md` đã bổ sung và liên kết từ README.
+- `[~]` Còn cần: nối broadcast event thật tới frontend, test business endpoint dưới tải, và hoàn thiện tài liệu báo cáo nhóm.
