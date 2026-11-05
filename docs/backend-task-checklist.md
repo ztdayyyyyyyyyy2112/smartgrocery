@@ -188,6 +188,7 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - `[~]` Hardening test job failure/terminal state đã bổ sung; concurrency multi-session và security matrix còn tiếp tục.
 - `[~]` Đã kiểm chứng concurrency checkout 2 session không oversell; cần mở rộng tải 50/100/200 request theo khả năng môi trường.
 - `[~]` Đã bổ sung RBAC matrix cho unauthenticated/customer; tải 50/100/200 request vẫn còn.
+- `[x]` Load test `/health` 50/100/200 request đạt 100% success, không có lỗi.
 - `[x]` Bổ sung release runbook/evidence: migration, test, smoke endpoint và acceptance flow.
 - `[x]` Xác minh database sạch: migrations `0001–0006`, seed và `24 passed` trên `smartgrocery_test`.
 - `[~]` Thêm Celery worker/retry configuration và test; Redis broker integration, scheduled refresh và WebSocket còn tiếp tục.

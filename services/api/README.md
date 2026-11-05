@@ -72,3 +72,11 @@ Invoke-RestMethod http://localhost:8000/api/v1/products
 The API uses PostgreSQL through `DATABASE_URL`. Docker is optional; if Docker
 Desktop/WSL is unavailable, start the local PostgreSQL Windows service and run
 the same migrations against it.
+
+Load probe for release evidence (safe `/health` endpoint):
+
+```powershell
+python scripts/load_test.py --requests 50 --concurrency 10
+python scripts/load_test.py --requests 100 --concurrency 20
+python scripts/load_test.py --requests 200 --concurrency 40
+```

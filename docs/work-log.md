@@ -571,6 +571,25 @@ Nhật ký này ghi lại các phiên làm việc của Tuấn Anh với trợ l
 - `git diff --check`: đạt.
 - WebSocket hiện là transport nền; broadcast event thực tế cần nối vào outbox consumer/frontend.
 
+## 2026-11-05 — Load test 50/100/200 request
+
+- [x] Chạy load probe read-only trên `/health` với 50 request / concurrency 10.
+- [x] Chạy 100 request / concurrency 20.
+- [x] Chạy 200 request / concurrency 40.
+- [x] Ghi throughput và latency vào `docs/load-test-results.md`.
+
+### Kết quả
+
+- 50: `50/50` thành công, `148.89 req/s`, p50 `29.11 ms`.
+- 100: `100/100` thành công, `261.50 req/s`, p50 `64.10 ms`.
+- 200: `200/200` thành công, `329.31 req/s`, p50 `118.18 ms`.
+
+### Percentile rerun
+
+- 50: `203.20 req/s`, p50/p95/p99 `27.80/97.22/136.63 ms`, max `136.63 ms`.
+- 100: `251.27 req/s`, p50/p95/p99 `65.11/138.95/186.13 ms`, max `186.13 ms`.
+- 200: `341.90 req/s`, p50/p95/p99 `99.27/196.84/217.17 ms`, max `219.18 ms`.
+
 ## 2026-11-05 — RBAC/security matrix hardening
 
 ### Đã làm
