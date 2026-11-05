@@ -183,5 +183,6 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - `[~]` Đã thêm polling worker có lock, attempts và retry an toàn; adapter publish thực tế vẫn cần nối vào message broker/webhook.
 - `[x]` Bổ sung test publish/retry outbox; toàn bộ test đạt `16 passed`.
 - `[~]` Thêm migration và API Forecast Job polling, forecasts/recommendations read + approve/reject; worker inference và ghi output từ intelligence còn tiếp tục.
+- `[x]` Recommendation hỗ trợ approve và convert thành PO; test workflow đạt `20 passed`.
 - `[x]` Kiểm tra lại toàn bộ test ngày 03/11: `13 passed`; Docker Desktop/WSL vẫn là blocker môi trường, không phải lỗi ứng dụng.
 - `[x]` Bổ sung test inactive-user; toàn bộ test hiện đạt `14 passed`.
