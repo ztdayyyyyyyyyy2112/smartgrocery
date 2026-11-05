@@ -185,5 +185,8 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - `[~]` Thêm migration và API Forecast Job polling, forecasts/recommendations read + approve/reject; worker inference và ghi output từ intelligence còn tiếp tục.
 - `[x]` Recommendation hỗ trợ approve và convert thành PO; test workflow đạt `20 passed`.
 - `[x]` Integration E2E checkout → inventory → forecast → recommendation → PO → receiving; toàn bộ test đạt `21 passed`.
+- `[~]` Hardening test job failure/terminal state đã bổ sung; concurrency multi-session và security matrix còn tiếp tục.
+- `[~]` Đã kiểm chứng concurrency checkout 2 session không oversell; cần mở rộng tải 50/100/200 request theo khả năng môi trường.
+- `[~]` Đã bổ sung RBAC matrix cho unauthenticated/customer; tải 50/100/200 request vẫn còn.
 - `[x]` Kiểm tra lại toàn bộ test ngày 03/11: `13 passed`; Docker Desktop/WSL vẫn là blocker môi trường, không phải lỗi ứng dụng.
 - `[x]` Bổ sung test inactive-user; toàn bộ test hiện đạt `14 passed`.

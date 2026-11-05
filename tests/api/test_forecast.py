@@ -57,6 +57,23 @@ def test_forecast_job_result_success_and_failure() -> None:
     assert failed.json()["status"] == "failed"
 
 
+def test_forecast_result_validation_and_terminal_state() -> None:
+    with SessionLocal() as db:
+        merchant = User(email=f"forecast-validation-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="Forecast Validation", role=UserRole.MERCHANT)
+        db.add(merchant)
+        db.commit()
+        db.refresh(merchant)
+        token = create_token(merchant, token_type="access", expires_delta=__import__("datetime").timedelta(minutes=15))
+    headers = {"Authorization": f"Bearer {token}"}
+    job_id = client.post("/api/v1/jobs/forecasts", headers=headers, json={"store_id": str(_store_id())}).json()["job_id"]
+    missing_error = client.post(f"/api/v1/jobs/{job_id}/result", headers=headers, json={"status": "failed"})
+    assert missing_error.status_code == 422
+    failed = client.post(f"/api/v1/jobs/{job_id}/result", headers=headers, json={"status": "failed", "error_message": "timeout"})
+    assert failed.status_code == 200
+    retry = client.post(f"/api/v1/jobs/{job_id}/result", headers=headers, json={"status": "failed", "error_message": "second attempt"})
+    assert retry.status_code == 409
+
+
 def test_recommendation_can_convert_to_purchase_order() -> None:
     with SessionLocal() as db:
         merchant = User(email=f"forecast-convert-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="Forecast Convert", role=UserRole.MERCHANT)
