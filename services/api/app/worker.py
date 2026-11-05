@@ -13,6 +13,10 @@ celery_app.conf.update(
     task_reject_on_worker_lost=True,
     task_track_started=True,
     broker_connection_retry_on_startup=True,
+    beat_schedule={
+        "publish-outbox-every-minute": {"task": "app.worker.run_outbox_batch", "schedule": 60.0},
+        "refresh-forecast-jobs-hourly": {"task": "app.worker.refresh_forecast_jobs", "schedule": 3600.0},
+    },
 )
 
 
@@ -31,3 +35,15 @@ def run_outbox_batch(self, limit: int = 50) -> dict[str, int]:
     with SessionLocal() as db:
         published, failed = publish_pending_events(db, noop_publisher, limit=limit)
     return {"published": published, "failed": failed}
+
+
+@celery_app.task
+def refresh_forecast_jobs() -> dict[str, int]:
+    """Report queued jobs without inventing forecast output."""
+    from sqlalchemy import func, select
+    from app.db.session import SessionLocal
+    from app.models import ForecastJob, ForecastJobStatus
+
+    with SessionLocal() as db:
+        queued = db.scalar(select(func.count()).select_from(ForecastJob).where(ForecastJob.status == ForecastJobStatus.QUEUED)) or 0
+    return {"queued": int(queued)}

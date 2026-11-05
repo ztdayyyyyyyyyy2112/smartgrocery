@@ -556,6 +556,21 @@ Nhật ký này ghi lại các phiên làm việc của Tuấn Anh với trợ l
 - Redis broker thật chưa chạy; cần integration test khi nhóm có Redis/Docker ổn định.
 - Redis broker đã được chạy thực tế bằng Docker; Celery worker connected và `run_outbox_batch` succeeded với `published=12, failed=0`.
 
+## 2026-11-05 — Scheduled refresh và WebSocket realtime
+
+### Đã làm
+
+- [x] Thêm Celery Beat schedule publish outbox mỗi phút và refresh forecast mỗi giờ.
+- [x] Thêm task `refresh_forecast_jobs` chỉ đếm job queued, không tự sinh forecast giả.
+- [x] Thêm WebSocket endpoint `/ws/events` và connection manager xử lý disconnect.
+- [x] Bổ sung test WebSocket và schedule configuration.
+
+### Kết quả
+
+- Toàn bộ test: `26 passed`.
+- `git diff --check`: đạt.
+- WebSocket hiện là transport nền; broadcast event thực tế cần nối vào outbox consumer/frontend.
+
 ## 2026-11-05 — RBAC/security matrix hardening
 
 ### Đã làm
