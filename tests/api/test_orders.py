@@ -1,15 +1,27 @@
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
+import pytest
 from sqlalchemy import select
 
 from app.main import app
 from app.db.session import SessionLocal
-from app.models import User, UserRole
+from app.models import BatchStatus, InventoryBatch, User, UserRole
 
 client = TestClient(app)
 STORE_ID = "00000000-0000-0000-0000-000000000001"
 MILK_ID = "00000000-0000-0000-0000-000000001002"
+
+
+@pytest.fixture(autouse=True)
+def restore_checkout_fixture_stock() -> None:
+    """Keep checkout tests independent from mutations made by earlier tests."""
+    with SessionLocal.begin() as db:
+        batches = db.scalars(select(InventoryBatch).where(InventoryBatch.product_id == MILK_ID)).all()
+        for batch in batches:
+            batch.quantity_on_hand = 100
+            batch.quantity_reserved = 0
+            batch.status = BatchStatus.AVAILABLE
 
 
 def _token() -> str:

@@ -600,3 +600,46 @@ Nhật ký này ghi lại các phiên làm việc của Tuấn Anh với trợ l
 - Alembic `0005_outbox -> 0006_forecast_jobs`: thành công.
 - Pytest: `18 passed`.
 - Chưa tự sinh forecast khi chưa có worker inference; job mới dừng ở trạng thái `queued` đúng contract.
+
+## 2026-11-05 — Nhận output Intelligence và xử lý job failure
+
+### Đã làm
+
+- [x] Thêm `POST /jobs/{job_id}/result` để nhận output forecast/recommendation.
+- [x] Job thành công lưu forecast/recommendation và chuyển `succeeded`.
+- [x] Job lỗi bắt buộc `error_message`, chuyển `failed` và không sinh forecast giả.
+- [x] Bổ sung test success/failure; nhóm Forecast đạt `3 passed`.
+
+### Vấn đề phát hiện
+
+- Chạy toàn bộ suite hiện có `3` test checkout fail `409 STOCK_INSUFFICIENT` do database test dùng chung đã bị giảm tồn kho sau nhiều lần chạy.
+- Đây là vấn đề test isolation/seed reset, không phải lỗi Forecast API; cần xử lý trước khi chốt PR.
+
+## 2026-11-05 — Sửa test isolation cho checkout
+
+### Đã làm
+
+- [x] Thêm pytest fixture tự động khôi phục tồn kho sản phẩm milk trước mỗi checkout test.
+- [x] Fixture reset `quantity_on_hand`, `quantity_reserved` và batch status trong phạm vi test; không reset database ứng dụng thủ công.
+- [x] Chạy lại toàn bộ backend test suite.
+
+### Kết quả
+
+- Pytest: `19 passed`.
+- `git diff --check`: đạt.
+- Hai cảnh báo còn lại là deprecation/cache warning, không làm fail test.
+
+## 2026-11-05 — Hoàn thiện Recommendation approve/convert-to-PO
+
+### Đã làm
+
+- [x] Approve recommendation thông thường.
+- [x] Hỗ trợ `convert_to_po=true` với `supplier_id`.
+- [x] Kiểm tra supplier và supplier-product mapping trước khi tạo PO.
+- [x] Tạo PO `pending_approval`, thêm PO item theo suggested quantity/unit cost.
+- [x] Chuyển recommendation sang `converted` và bổ sung test workflow.
+
+### Kết quả
+
+- Pytest: `20 passed`.
+- `git diff --check`: đạt.
