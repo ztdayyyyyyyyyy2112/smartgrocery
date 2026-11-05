@@ -1,8 +1,12 @@
+import asyncio
+import json
+
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, OperationalError
 from uuid import uuid4
 import jwt
+from redis import Redis
 from app.core.config import get_settings
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,6 +18,7 @@ from app.api.inventory import router as inventory_router
 from app.api.procurement import router as procurement_router
 from app.api.forecast import router as forecast_router
 from app.realtime import manager
+from app.event_publisher import EVENTS_CHANNEL
 
 app = FastAPI(
     title="SmartGrocery API",
@@ -67,11 +72,24 @@ async def events_websocket(websocket: WebSocket):
         await websocket.close(code=1008, reason="Invalid authentication")
         return
     await manager.connect(websocket)
+    subscriber = Redis.from_url(get_settings().celery_broker_url, decode_responses=True).pubsub()
+    subscriber.subscribe(EVENTS_CHANNEL)
     try:
         while True:
-            await websocket.receive_text()
+            try:
+                await asyncio.wait_for(websocket.receive_text(), timeout=0.25)
+            except asyncio.TimeoutError:
+                pass
+            message = await asyncio.to_thread(subscriber.get_message, True, 0.01)
+            if message and message.get("type") == "message":
+                try:
+                    await websocket.send_json(json.loads(message["data"]))
+                except (TypeError, json.JSONDecodeError):
+                    continue
     except Exception:
         manager.disconnect(websocket)
+    finally:
+        subscriber.close()
 
 
 @app.get("/health")
