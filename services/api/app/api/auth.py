@@ -1,4 +1,5 @@
-from datetime import timedelta
+import hashlib
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -8,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db.session import get_db
-from app.models import User, UserRole
+from app.models import RefreshToken, User, UserRole
 from app.security import create_token, current_user, hash_password, verify_password
 from app.rate_limit import check_rate_limit
 
@@ -26,8 +27,20 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class RefreshRequest(BaseModel):
+    refresh_token: str = Field(min_length=20)
+
+
 def user_response(user: User) -> dict:
     return {"id": str(user.id), "email": user.email, "full_name": user.full_name, "role": user.role.value}
+
+
+def _issue_tokens(user: User, db: Session) -> dict:
+    settings = get_settings()
+    refresh = create_token(user, token_type="refresh", expires_delta=timedelta(days=settings.jwt_refresh_token_days))
+    db.add(RefreshToken(user_id=user.id, token_hash=hashlib.sha256(refresh.encode()).hexdigest(), expires_at=datetime.now(timezone.utc) + timedelta(days=settings.jwt_refresh_token_days)))
+    access = create_token(user, token_type="access", expires_delta=timedelta(minutes=settings.jwt_access_token_minutes))
+    return {"access_token": access, "refresh_token": refresh, "token_type": "bearer", "user": user_response(user)}
 
 
 @router.post("/register", status_code=201)
@@ -39,8 +52,9 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)) -> dict:
     db.add(user)
     db.commit()
     db.refresh(user)
-    settings = get_settings()
-    return {"access_token": create_token(user, token_type="access", expires_delta=timedelta(minutes=settings.jwt_access_token_minutes)), "token_type": "bearer", "user": user_response(user)}
+    response = _issue_tokens(user, db)
+    db.commit()
+    return response
 
 
 @router.post("/login")
@@ -49,8 +63,24 @@ def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)
     user = db.scalar(select(User).where(User.email == payload.email))
     if user is None or not user.is_active or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    settings = get_settings()
-    return {"access_token": create_token(user, token_type="access", expires_delta=timedelta(minutes=settings.jwt_access_token_minutes)), "token_type": "bearer", "user": user_response(user)}
+    response = _issue_tokens(user, db)
+    db.commit()
+    return response
+
+
+@router.post("/refresh")
+def refresh(payload: RefreshRequest, db: Session = Depends(get_db)) -> dict:
+    token_hash = hashlib.sha256(payload.refresh_token.encode()).hexdigest()
+    stored = db.scalar(select(RefreshToken).where(RefreshToken.token_hash == token_hash).with_for_update())
+    if stored is None or stored.revoked_at is not None or stored.expires_at <= datetime.now(timezone.utc):
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+    user = db.get(User, stored.user_id)
+    if user is None or not user.is_active:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+    stored.revoked_at = datetime.now(timezone.utc)
+    response = _issue_tokens(user, db)
+    db.commit()
+    return response
 
 
 @router.get("/me")

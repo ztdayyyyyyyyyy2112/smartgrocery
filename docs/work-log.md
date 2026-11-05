@@ -835,3 +835,10 @@ Hai lỗi ban đầu chỉ nằm trong test (format Decimal và detached SQLAlch
 - Nối broadcast event thật từ outbox tới frontend/WebSocket.
 - Nếu cần production evidence: load test trên business endpoint và staging.
 - Hoàn thiện nội dung báo cáo nhóm, sơ đồ/logs và phần limitations.
+## 2026-11-05 — Refresh token rotation
+
+- Added refresh token persistence and migration `0008_refresh_tokens`.
+- Register/login now return access and refresh tokens.
+- Added `/api/v1/auth/refresh` with rotation and revocation of the previous token.
+- Added unique JWT `jti` claims to prevent token hash collisions on rapid issuance.
+- Verification: Alembic upgrade succeeded; `35 passed`; `git diff --check` passed.

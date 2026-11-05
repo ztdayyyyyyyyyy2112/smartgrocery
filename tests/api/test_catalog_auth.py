@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 from sqlalchemy import select
+from uuid import uuid4
 
 from app.main import app
 from app.db.session import SessionLocal
@@ -25,19 +26,24 @@ def test_catalog_pagination_and_detail() -> None:
 
 
 def test_register_login_and_invalid_auth() -> None:
-    email = "catalog-auth-test@example.com"
+    email = f"catalog-auth-{uuid4().hex}@example.com"
     register = client.post("/api/v1/auth/register", json={"email": email, "password": "password123", "full_name": "Auth Test"})
     assert register.status_code in {201, 409}
     login = client.post("/api/v1/auth/login", json={"email": email, "password": "password123"})
     assert login.status_code == 200
     token = login.json()["access_token"]
+    refresh_token = login.json()["refresh_token"]
     assert client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}).status_code == 200
     assert client.get("/api/v1/auth/me").status_code == 401
     assert client.post("/api/v1/auth/login", json={"email": email, "password": "wrong-password"}).status_code == 401
+    rotated = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh_token})
+    assert rotated.status_code == 200
+    assert rotated.json()["refresh_token"] != refresh_token
+    assert client.post("/api/v1/auth/refresh", json={"refresh_token": refresh_token}).status_code == 401
 
 
 def test_inactive_user_cannot_login() -> None:
-    email = "inactive-auth-test@example.com"
+    email = f"inactive-auth-{uuid4().hex}@example.com"
     register = client.post("/api/v1/auth/register", json={"email": email, "password": "password123", "full_name": "Inactive Test"})
     assert register.status_code in {201, 409}
     with SessionLocal() as db:
