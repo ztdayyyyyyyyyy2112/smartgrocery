@@ -52,10 +52,10 @@ Sau đó mở PR `feat/be-<task-name> -> develop`, ghi rõ chức năng, lệnh 
 - [ ] Tạo/hoàn thiện cấu hình FastAPI và database connection.
 - [x] Tạo SQLAlchemy models nền tảng theo ERD: users, stores, categories, products, inventory batches và stock ledger.
 - [x] Tạo migration cho users, stores, categories, products.
-- [~] Tạo migration cho inventory batches, orders, order items, reservations và idempotency; business logic checkout chưa bắt đầu.
+- [~] Tạo migration cho inventory batches; orders, order items, reservations và idempotency chưa bắt đầu.
 - [ ] Tạo migration cho suppliers, purchase orders, goods receipts.
 - [ ] Tạo migration cho forecasts, recommendations, jobs và business rules.
-- `[~]` Tạo seed store, categories, products và batches; user/role và suppliers chờ các module tương ứng.
+- [ ] Tạo seed tối thiểu: user/role, store, categories, products, batches và suppliers.
 - [~] Chạy migration trên database sạch thành công; rollback/failure-path còn cần kiểm tra.
 - [ ] Bằng chứng: log migration, kiểm tra bảng/seed và test backend.
 
@@ -158,20 +158,3 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - `[ ]` Procurement/receiving.
 - `[ ]` Forecast/job integration.
 - `[ ]` Background jobs, integration, security và release evidence.
--
-### Progress update — Authentication/RBAC and Products API
-
-- `[~]` Register/login/me đã có; refresh token chưa có schema.
-- `[x]` Argon2 password hashing và JWT access token.
-- `[~]` Role guard helper đã có; merchant routes chưa có.
-- `[~]` Categories/products đã có; product detail và pagination còn thiếu.
-- `[ ]` Test đầy đủ 401/403/404/inactive user/customer scope.
-
-### Progress update — 2026-11-03
-
-- `[x]` Products pagination và product detail.
-- `[x]` Test register/login/me, missing token, invalid password và product 404.
-- `[~]` Auth vẫn thiếu refresh token và inactive-user/RBAC integration tests.
-- `[~]` Checkout tạo order/reservation, FEFO và idempotency đã có; cancel/fulfil và concurrency test còn thiếu.
-- `[~]` Checkout lifecycle đã có cancel/release và fulfil; concurrency test còn thiếu.
-- `[~]` Inventory read API và expiry/low-stock rules đã có; reorder point và concurrency test còn thiếu.
