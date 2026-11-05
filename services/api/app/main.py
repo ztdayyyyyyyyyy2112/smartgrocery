@@ -2,10 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.session import database_is_connected
-from app.api.auth import router as auth_router
-from app.api.catalog import router as catalog_router
-from app.api.orders import router as orders_router
-from app.api.inventory import router as inventory_router
 
 app = FastAPI(
     title="SmartGrocery API",
@@ -21,10 +17,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.include_router(auth_router, prefix="/api/v1")
-app.include_router(catalog_router, prefix="/api/v1")
-app.include_router(orders_router, prefix="/api/v1")
-app.include_router(inventory_router, prefix="/api/v1")
 
 
 @app.get("/health")

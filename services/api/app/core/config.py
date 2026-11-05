@@ -17,9 +17,6 @@ class Settings(BaseSettings):
     )
 
     app_env: str = "development"
-    jwt_secret_key: str = "change-this-local-secret"
-    jwt_access_token_minutes: int = 15
-    jwt_refresh_token_days: int = 7
     database_url: str = (
         "postgresql://smartgrocery:smartgrocery@localhost:5432/smartgrocery"
     )

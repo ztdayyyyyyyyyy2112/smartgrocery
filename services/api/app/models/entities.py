@@ -6,7 +6,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Enum, ForeignKey, Numeric, String, Text, text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -34,13 +34,6 @@ class StockEventType(str, enum.Enum):
     QUARANTINE = "quarantine"
 
 
-class OrderStatus(str, enum.Enum):
-    PENDING = "pending"
-    CONFIRMED = "confirmed"
-    CANCELLED = "cancelled"
-    FULFILLED = "fulfilled"
-
-
 class TimestampMixin:
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()"), nullable=False
@@ -57,7 +50,7 @@ class User(TimestampMixin, Base):
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(Text, nullable=False)
     full_name: Mapped[str] = mapped_column(String(200), nullable=False)
-    role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_role", values_callable=lambda items: [item.value for item in items]), default=UserRole.CUSTOMER, nullable=False)
+    role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_role"), default=UserRole.CUSTOMER, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"), nullable=False)
 
 
@@ -110,7 +103,7 @@ class InventoryBatch(Base):
     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"), nullable=False)
     expiry_date: Mapped[date | None] = mapped_column(Date)
     unit_cost: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
-    status: Mapped[BatchStatus] = mapped_column(Enum(BatchStatus, name="batch_status", values_callable=lambda items: [item.value for item in items]), default=BatchStatus.AVAILABLE, nullable=False)
+    status: Mapped[BatchStatus] = mapped_column(Enum(BatchStatus, name="batch_status"), default=BatchStatus.AVAILABLE, nullable=False)
     __table_args__ = (
         CheckConstraint("quantity_on_hand >= 0", name="ck_batches_on_hand_nonnegative"),
         CheckConstraint("quantity_reserved >= 0", name="ck_batches_reserved_nonnegative"),
@@ -125,65 +118,9 @@ class StockLedgerEntry(Base):
     store_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("stores.id"), nullable=False)
     product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("products.id"), nullable=False)
     batch_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("inventory_batches.id"))
-    event_type: Mapped[StockEventType] = mapped_column(Enum(StockEventType, name="stock_event_type", values_callable=lambda items: [item.value for item in items]), nullable=False)
+    event_type: Mapped[StockEventType] = mapped_column(Enum(StockEventType, name="stock_event_type"), nullable=False)
     quantity_delta: Mapped[Decimal] = mapped_column(Numeric(12, 3), nullable=False)
     reference_type: Mapped[str | None] = mapped_column(String(50))
     reference_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"), nullable=False)
-
-
-class Order(TimestampMixin, Base):
-    __tablename__ = "orders"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
-    store_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("stores.id"), nullable=False)
-    customer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
-    status: Mapped[OrderStatus] = mapped_column(Enum(OrderStatus, name="order_status", values_callable=lambda items: [item.value for item in items]), default=OrderStatus.PENDING, nullable=False)
-    subtotal: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    total: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    currency: Mapped[str] = mapped_column(String(3), server_default=text("'VND'"), nullable=False)
-    idempotency_key: Mapped[str | None] = mapped_column(String(255), unique=True)
-    cancelled_reason: Mapped[str | None] = mapped_column(Text)
-    __table_args__ = (
-        CheckConstraint("subtotal >= 0", name="ck_orders_subtotal_nonnegative"),
-        CheckConstraint("total >= 0", name="ck_orders_total_nonnegative"),
-    )
-
-
-class OrderItem(Base):
-    __tablename__ = "order_items"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
-    order_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
-    product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("products.id"), nullable=False)
-    quantity: Mapped[Decimal] = mapped_column(Numeric(12, 3), nullable=False)
-    unit_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    line_total: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    __table_args__ = (
-        CheckConstraint("quantity > 0", name="ck_order_items_quantity_positive"),
-        CheckConstraint("unit_price >= 0", name="ck_order_items_unit_price_nonnegative"),
-        CheckConstraint("line_total >= 0", name="ck_order_items_line_total_nonnegative"),
-    )
-
-
-class StockReservation(Base):
-    __tablename__ = "stock_reservations"
-
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
-    order_item_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("order_items.id", ondelete="CASCADE"), nullable=False)
-    batch_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("inventory_batches.id"), nullable=False)
-    quantity: Mapped[Decimal] = mapped_column(Numeric(12, 3), nullable=False)
-    __table_args__ = (CheckConstraint("quantity > 0", name="ck_reservations_quantity_positive"),)
-
-
-class IdempotencyKey(Base):
-    __tablename__ = "idempotency_keys"
-
-    key: Mapped[str] = mapped_column(String(255), primary_key=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
-    request_hash: Mapped[str] = mapped_column(String(128), nullable=False)
-    response_code: Mapped[int | None] = mapped_column()
-    response_body: Mapped[dict | None] = mapped_column(JSONB)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"), nullable=False)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
