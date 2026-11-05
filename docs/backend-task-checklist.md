@@ -188,5 +188,6 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - `[~]` Hardening test job failure/terminal state đã bổ sung; concurrency multi-session và security matrix còn tiếp tục.
 - `[~]` Đã kiểm chứng concurrency checkout 2 session không oversell; cần mở rộng tải 50/100/200 request theo khả năng môi trường.
 - `[~]` Đã bổ sung RBAC matrix cho unauthenticated/customer; tải 50/100/200 request vẫn còn.
+- `[x]` Bổ sung release runbook/evidence: migration, test, smoke endpoint và acceptance flow.
 - `[x]` Kiểm tra lại toàn bộ test ngày 03/11: `13 passed`; Docker Desktop/WSL vẫn là blocker môi trường, không phải lỗi ứng dụng.
 - `[x]` Bổ sung test inactive-user; toàn bộ test hiện đạt `14 passed`.
