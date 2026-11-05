@@ -30,10 +30,11 @@ celery_app.conf.update(
 def run_outbox_batch(self, limit: int = 50) -> dict[str, int]:
     """Process one outbox batch; broker/worker retries transient failures."""
     from app.db.session import SessionLocal
-    from app.outbox import noop_publisher, publish_pending_events
+    from app.event_publisher import publish_event_to_redis
+    from app.outbox import publish_pending_events
 
     with SessionLocal() as db:
-        published, failed = publish_pending_events(db, noop_publisher, limit=limit)
+        published, failed = publish_pending_events(db, publish_event_to_redis, limit=limit)
     return {"published": published, "failed": failed}
 
 

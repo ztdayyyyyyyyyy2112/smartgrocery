@@ -215,3 +215,4 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - `[x]` Backend runbook `docs/backend-runbook.md` đã bổ sung và liên kết từ README.
 - `[~]` Còn cần: nối broadcast event thật tới frontend, test business endpoint dưới tải, và hoàn thiện tài liệu báo cáo nhóm.
 - [x] Refresh token rotation: persisted hashed tokens, expiry/revocation checks, and regression coverage (`35 passed`).
+- [x] Outbox worker publishes serialized events to Redis channel `smartgrocery:events`; publisher test added (`36 passed`).
