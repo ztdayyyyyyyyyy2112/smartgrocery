@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -70,28 +70,37 @@ def get_forecast_job(job_id: UUID, db: Session = Depends(get_db), _user=Depends(
 
 @router.post("/jobs/{job_id}/result")
 def complete_forecast_job(job_id: UUID, payload: ForecastJobResult, db: Session = Depends(get_db), _user=Depends(merchant_admin)) -> dict:
-    job = db.get(ForecastJob, job_id)
-    if job is None:
-        raise HTTPException(status_code=404, detail="Forecast job not found")
-    if job.status not in {ForecastJobStatus.QUEUED, ForecastJobStatus.RUNNING}:
-        raise HTTPException(status_code=409, detail="Forecast job cannot be completed")
-    if payload.status == ForecastJobStatus.FAILED:
-        if not payload.error_message:
-            raise HTTPException(status_code=422, detail="error_message is required for failed jobs")
-        job.status = ForecastJobStatus.FAILED
-        job.error_message = payload.error_message
-        db.commit()
-        return {"job_id": str(job.id), "status": job.status.value}
-    if payload.status != ForecastJobStatus.SUCCEEDED or not payload.model_name or not payload.model_version:
-        raise HTTPException(status_code=422, detail="Successful jobs require model metadata")
-    for item in payload.forecasts:
-        db.add(DemandForecast(job_id=job.id, store_id=job.store_id, product_id=item.product_id, target_date=item.target_date, predicted_qty=item.predicted_qty, model_name=payload.model_name, model_version=payload.model_version))
-    for item in payload.recommendations:
-        db.add(ReplenishmentRecommendation(job_id=job.id, store_id=job.store_id, product_id=item.product_id, suggested_qty=item.suggested_qty, safety_stock=item.safety_stock, reorder_point=item.reorder_point, meu_score=item.meu_score, reason=item.reason, status=RecommendationStatus.PENDING))
-    job.status = ForecastJobStatus.SUCCEEDED
-    job.error_message = None
-    db.commit()
-    return {"job_id": str(job.id), "status": job.status.value, "forecast_count": len(payload.forecasts), "recommendation_count": len(payload.recommendations)}
+    db.rollback()
+    with db.begin():
+        job = db.scalar(select(ForecastJob).where(ForecastJob.id == job_id).with_for_update())
+        if job is None:
+            raise HTTPException(status_code=404, detail="Forecast job not found")
+        if job.status not in {ForecastJobStatus.QUEUED, ForecastJobStatus.RUNNING}:
+            raise HTTPException(status_code=409, detail="Forecast job cannot be completed")
+        if payload.status == ForecastJobStatus.FAILED:
+            if not payload.error_message:
+                raise HTTPException(status_code=422, detail="error_message is required for failed jobs")
+            job.status = ForecastJobStatus.FAILED
+            job.error_message = payload.error_message
+            return {"job_id": str(job.id), "status": job.status.value}
+        if payload.status != ForecastJobStatus.SUCCEEDED or not payload.model_name or not payload.model_version:
+            raise HTTPException(status_code=422, detail="Successful jobs require model metadata")
+        product_ids = {item.product_id for item in payload.forecasts} | {item.product_id for item in payload.recommendations}
+        if product_ids:
+            from app.models import Product
+            products = set(db.scalars(select(Product.id).where(Product.id.in_(product_ids), Product.is_active.is_(True))).all())
+            if products != product_ids:
+                raise HTTPException(status_code=422, detail="Unknown or inactive product in forecast result")
+        horizon_end = job.as_of + timedelta(days=job.horizon_days)
+        for item in payload.forecasts:
+            if not job.as_of <= item.target_date <= horizon_end:
+                raise HTTPException(status_code=422, detail="Forecast target_date outside job horizon")
+            db.add(DemandForecast(job_id=job.id, store_id=job.store_id, product_id=item.product_id, target_date=item.target_date, predicted_qty=item.predicted_qty, model_name=payload.model_name, model_version=payload.model_version))
+        for item in payload.recommendations:
+            db.add(ReplenishmentRecommendation(job_id=job.id, store_id=job.store_id, product_id=item.product_id, suggested_qty=item.suggested_qty, safety_stock=item.safety_stock, reorder_point=item.reorder_point, meu_score=item.meu_score, reason=item.reason, status=RecommendationStatus.PENDING))
+        job.status = ForecastJobStatus.SUCCEEDED
+        job.error_message = None
+        return {"job_id": str(job.id), "status": job.status.value, "forecast_count": len(payload.forecasts), "recommendation_count": len(payload.recommendations)}
 
 
 @router.get("/forecasts")
