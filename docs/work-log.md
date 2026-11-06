@@ -854,3 +854,8 @@ Hai lỗi ban đầu chỉ nằm trong test (format Decimal và detached SQLAlch
 - Authenticated merchant/admin connections forward valid JSON events to clients.
 - Subscriber cleanup runs when the connection closes.
 - Verification: Redis/WebSocket end-to-end test and full suite pass (`37 passed`).
+## 2026-11-06 — Backend checklist status refresh
+
+- Recorded the merged refresh-token, Redis outbox publisher, and Redis-to-WebSocket work.
+- Clarified that frontend WebSocket UX and forecast intelligence inference are cross-team items, not standalone Backend tasks.
+- Current backend verification baseline: `37 passed`.

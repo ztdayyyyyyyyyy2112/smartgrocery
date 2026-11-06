@@ -217,3 +217,9 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - [x] Refresh token rotation: persisted hashed tokens, expiry/revocation checks, and regression coverage (`35 passed`).
 - [x] Outbox worker publishes serialized events to Redis channel `smartgrocery:events`; publisher test added (`36 passed`).
 - [x] WebSocket event stream subscribes to Redis `smartgrocery:events` and forwards published JSON events (`37 passed`).
+- [x] Refresh token rotation: migration `0008_refresh_tokens`, hashed token storage, expiry/revocation checks, and regression coverage.
+- [x] Outbox publishing: Celery worker publishes serialized events to Redis channel `smartgrocery:events`.
+- [x] Realtime delivery: authenticated merchant/admin WebSocket clients receive Redis events; end-to-end test covered.
+- [x] Backend verification baseline: full pytest suite `37 passed`.
+- [ ] Frontend WebSocket subscription/reconnect UX (Frontend ownership; Backend provides the contract).
+- [ ] Forecast intelligence inference integration (Intelligence/Forecast ownership; Backend job contract is available).
