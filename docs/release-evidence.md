@@ -63,3 +63,14 @@ Results:
 - `pg_dump.exe` and `pg_restore.exe` are installed under PostgreSQL 18.
 - Reproducible schema-only and custom-format backup commands are documented in `docs/schema-backup.md`.
 - Backup artifacts must remain outside Git and use approved secure storage.
+## Business endpoint load test — 2026-11-06
+
+Endpoint: `GET /api/v1/products` on local PostgreSQL-backed API.
+
+| Requests | Concurrency | Success | Throughput | p50 | p95 | p99 | Max |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 50 | 10 | 50/50 | 108.81 RPS | 54.96 ms | 203.83 ms | 221.95 ms | 221.95 ms |
+| 100 | 20 | 100/100 | 142.14 RPS | 113.62 ms | 260.32 ms | 295.74 ms | 295.74 ms |
+| 200 | 40 | 200/200 | 192.93 RPS | 179.90 ms | 341.55 ms | 377.51 ms | 377.55 ms |
+
+All requests succeeded. These local measurements are evidence for development validation, not a production capacity guarantee.

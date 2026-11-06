@@ -859,3 +859,9 @@ Hai lỗi ban đầu chỉ nằm trong test (format Decimal và detached SQLAlch
 - Recorded the merged refresh-token, Redis outbox publisher, and Redis-to-WebSocket work.
 - Clarified that frontend WebSocket UX and forecast intelligence inference are cross-team items, not standalone Backend tasks.
 - Current backend verification baseline: `37 passed`.
+## 2026-11-06 — Business endpoint load test
+
+- Verified `GET /api/v1/products` under 50/10, 100/20, and 200/40 request/concurrency profiles.
+- Success rate was 100% for all profiles.
+- Highest observed p99 latency was `377.51 ms`; highest throughput was `192.93 RPS`.
+- Recorded results in `docs/release-evidence.md`.
