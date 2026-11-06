@@ -48,3 +48,19 @@ def test_merchant_only_endpoints_enforce_auth_and_role() -> None:
     assert client.get("/api/v1/inventory", headers=headers).status_code == 403
     assert client.get("/api/v1/forecasts", headers=headers).status_code == 403
     assert client.get("/api/v1/suppliers", headers=headers).status_code == 403
+
+
+def test_rbac_matrix_covers_merchant_success_inactive_and_not_found() -> None:
+    with SessionLocal() as db:
+        merchant = User(email=f"rbac-merchant-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="RBAC Merchant", role=UserRole.MERCHANT)
+        inactive = User(email=f"rbac-inactive-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="RBAC Inactive", role=UserRole.MERCHANT, is_active=False)
+        db.add_all([merchant, inactive])
+        db.commit()
+        db.refresh(merchant)
+        db.refresh(inactive)
+        merchant_token = create_token(merchant, token_type="access", expires_delta=timedelta(minutes=15))
+        inactive_token = create_token(inactive, token_type="access", expires_delta=timedelta(minutes=15))
+
+    assert client.get("/api/v1/inventory", headers={"Authorization": f"Bearer {merchant_token}"}).status_code == 200
+    assert client.get("/api/v1/inventory", headers={"Authorization": f"Bearer {inactive_token}"}).status_code == 401
+    assert client.get(f"/api/v1/products/{uuid4()}").status_code == 404

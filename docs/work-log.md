@@ -865,3 +865,8 @@ Hai lỗi ban đầu chỉ nằm trong test (format Decimal và detached SQLAlch
 - Success rate was 100% for all profiles.
 - Highest observed p99 latency was `377.51 ms`; highest throughput was `192.93 RPS`.
 - Recorded results in `docs/release-evidence.md`.
+## 2026-11-06 — Security/RBAC matrix verification
+
+- Added regression coverage for merchant success, inactive-user rejection, and missing-resource `404`.
+- Confirmed existing unauthenticated/customer `401`/`403` coverage.
+- Redis was restarted for realtime tests; full suite result: `38 passed, 1 warning`.

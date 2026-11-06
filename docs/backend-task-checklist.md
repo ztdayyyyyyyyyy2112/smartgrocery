@@ -223,3 +223,4 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - [x] Backend verification baseline: full pytest suite `37 passed`.
 - [ ] Frontend WebSocket subscription/reconnect UX (Frontend ownership; Backend provides the contract).
 - [ ] Forecast intelligence inference integration (Intelligence/Forecast ownership; Backend job contract is available).
+- [x] Security/RBAC matrix expanded: merchant success, inactive-user `401`, missing resource `404`, customer `403`; full suite `38 passed`.
