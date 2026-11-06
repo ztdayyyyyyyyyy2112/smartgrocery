@@ -870,3 +870,8 @@ Hai lỗi ban đầu chỉ nằm trong test (format Decimal và detached SQLAlch
 - Added regression coverage for merchant success, inactive-user rejection, and missing-resource `404`.
 - Confirmed existing unauthenticated/customer `401`/`403` coverage.
 - Redis was restarted for realtime tests; full suite result: `38 passed, 1 warning`.
+## 2026-11-06 — Final backend handoff preparation
+
+- Consolidated release evidence, checklist status, and runbook verification.
+- Alembic upgrade passed and full suite completed with `38 passed, 2 warnings`.
+- Recorded remaining Frontend and Intelligence/Forecast ownership explicitly.

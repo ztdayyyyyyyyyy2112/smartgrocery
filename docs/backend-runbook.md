@@ -108,3 +108,15 @@ Load probe from the repository root:
 - Docker/WSL errors: use the local PostgreSQL service; Docker is optional for the API.
 - `rg not recognized`: use PowerShell `Select-String` instead.
 - Never reset the development database to fix a test; use a separate test database.
+## Final handoff verification — 2026-11-06
+
+From the repository root, the final verification commands are:
+
+```powershell
+cd services/api
+& .\.venv\Scripts\python.exe -m alembic upgrade head
+cd ../..
+& .\services\api\.venv\Scripts\python.exe -m pytest -q
+```
+
+Expected result: `38 passed`. Redis must be running for the realtime integration test.
