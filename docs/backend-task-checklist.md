@@ -224,3 +224,12 @@ Mỗi ngày cập nhật cuối file hoặc PR với:
 - [ ] Frontend WebSocket subscription/reconnect UX (Frontend ownership; Backend provides the contract).
 - [ ] Forecast intelligence inference integration (Intelligence/Forecast ownership; Backend job contract is available).
 - [x] Security/RBAC matrix expanded: merchant success, inactive-user `401`, missing resource `404`, customer `403`; full suite `38 passed`.
+## Final backend handoff status — 2026-11-06
+
+- [x] Database migrations through head verified.
+- [x] Backend test suite verified: `38 passed`.
+- [x] Business endpoint load evidence recorded.
+- [x] Redis outbox publisher and WebSocket delivery verified.
+- [x] Security/RBAC matrix verified.
+- [ ] Frontend WebSocket UX and reconnect behavior (Frontend ownership).
+- [ ] Forecast intelligence inference integration (Intelligence/Forecast ownership).

@@ -74,3 +74,11 @@ Endpoint: `GET /api/v1/products` on local PostgreSQL-backed API.
 | 200 | 40 | 200/200 | 192.93 RPS | 179.90 ms | 341.55 ms | 377.51 ms | 377.55 ms |
 
 All requests succeeded. These local measurements are evidence for development validation, not a production capacity guarantee.
+## Final backend handoff — 2026-11-06
+
+- Alembic `upgrade head`: passed on the configured PostgreSQL database.
+- Full pytest suite: `38 passed, 2 warnings`.
+- Business load probe: `GET /api/v1/products`, 100% success at 50/100/200 requests.
+- Realtime path verified by automated Redis-to-WebSocket test.
+- RBAC matrix covers unauthenticated `401`, customer `403`, inactive user `401`, merchant success, and missing resource `404`.
+- Remaining cross-team work: frontend WebSocket UX/reconnect handling and intelligence-service forecast inference.
