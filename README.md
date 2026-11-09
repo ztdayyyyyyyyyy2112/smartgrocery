@@ -73,4 +73,4 @@ The CI workflow runs these checks for pull requests. See [backend release eviden
 
 ## Collaboration
 
-Create a task branch from the latest `develop`, open a pull request into `develop`, include test results, and ask another team member to review. Promote `develop` to `main` through the [draft release PR](https://github.com/ztdayyyyyyyyyy2112/smartgrocery/pull/47) only after the acceptance checklist is complete. Keep `.env`, real credentials, raw datasets and generated model files out of Git.
+Create a task branch from the latest `develop`, open a pull request into `develop`, and include test results. Merge only when CI and the task's acceptance criteria pass; reviewer invitations are optional. Promote `develop` to `main` through the [draft release PR](https://github.com/ztdayyyyyyyyyy2112/smartgrocery/pull/47) only after the acceptance checklist is complete. Keep `.env`, real credentials, raw datasets and generated model files out of Git.
