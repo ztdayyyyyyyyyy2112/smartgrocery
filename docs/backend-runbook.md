@@ -1,15 +1,14 @@
 # SmartGrocery Backend Runbook
 
 This runbook starts the FastAPI backend with local PostgreSQL and optional Redis/Celery.
-Run commands from PowerShell unless noted otherwise.
+Run commands from PowerShell unless noted otherwise. Open each new terminal at the repository root unless a step changes directory. The [root README](../README.md) is the canonical setup guide.
 
 ## 1. Prerequisites
 
-- PostgreSQL 18 service installed and running.
+- PostgreSQL 16 and Redis 7 through Docker Compose, or equivalent local services.
 - Python virtual environment at `services/api/.venv`.
-- Docker Desktop only if Redis is needed.
 
-Check PostgreSQL:
+If using the local PostgreSQL 18 Windows service instead of Compose, check it with:
 
 ```powershell
 Get-Service postgresql-x64-18
@@ -19,7 +18,7 @@ Start-Service postgresql-x64-18 # only when it is stopped
 ## 2. Python environment
 
 ```powershell
-cd F:\smartgrocery\smartgrocery\services\api
+Set-Location services/api
 python -m venv .venv # skip when .venv already exists
 & .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
@@ -55,28 +54,26 @@ Expected health response includes `status=ok` and `database=connected`.
 In a second terminal:
 
 ```powershell
-cd F:\smartgrocery\smartgrocery
+# Open this terminal at the repository root
 & .\services\api\.venv\Scripts\python.exe -m pytest -q
 ```
 
-The latest verified suite has 29 passing tests. Non-blocking Starlette/pytest
-warnings may appear.
+The 2026-11-06 backend handoff recorded 38 passing tests. Rerun the suite for current evidence; non-blocking Starlette/pytest warnings may appear.
 
 ## 6. Optional Redis and Celery
 
 Start Redis with Docker:
 
 ```powershell
-docker start smartgrocery-redis
-# or, on first run:
-docker run -d --name smartgrocery-redis -p 6379:6379 redis:7
-docker exec -it smartgrocery-redis redis-cli ping
+docker compose up -d redis
+docker compose exec redis redis-cli ping
 ```
 
 Start the Windows-compatible Celery worker:
 
 ```powershell
-cd F:\smartgrocery\smartgrocery\services\api
+# Open a new terminal at the repository root
+Set-Location services/api
 $env:CELERY_BROKER_URL="redis://localhost:6379/0"
 $env:CELERY_RESULT_BACKEND="redis://localhost:6379/1"
 & .\.venv\Scripts\python.exe -m celery -A app.worker.celery_app worker --loglevel=INFO --pool=solo
