@@ -19,7 +19,7 @@ Start-Service postgresql-x64-18 # only when it is stopped
 
 ```powershell
 Set-Location services/api
-python -m venv .venv # skip when .venv already exists
+py -3.11 -m venv .venv # skip when .venv already exists
 & .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
