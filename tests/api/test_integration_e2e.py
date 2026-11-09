@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -31,7 +31,7 @@ def test_checkout_to_forecast_to_receiving_flow() -> None:
     result = client.post(
         f"/api/v1/jobs/{job['job_id']}/result",
         headers={"Authorization": f"Bearer {merchant_token}"},
-        json={"status": "succeeded", "model_name": "seasonal_naive", "model_version": "e2e", "forecasts": [{"product_id": str(product_id), "target_date": "2026-11-10", "predicted_qty": 10}], "recommendations": [{"product_id": str(product_id), "suggested_qty": 2, "safety_stock": 1, "reorder_point": 2, "meu_score": 0.8, "reason": "E2E replenishment"}]},
+        json={"status": "succeeded", "model_name": "seasonal_naive", "model_version": "e2e", "forecasts": [{"product_id": str(product_id), "target_date": (date.today() + timedelta(days=1)).isoformat(), "predicted_qty": 10}], "recommendations": [{"product_id": str(product_id), "suggested_qty": 2, "safety_stock": 1, "reorder_point": 2, "meu_score": 0.8, "reason": "E2E replenishment"}]},
     )
     assert result.status_code == 200
     recommendations = client.get("/api/v1/recommendations", headers={"Authorization": f"Bearer {merchant_token}"}).json()
