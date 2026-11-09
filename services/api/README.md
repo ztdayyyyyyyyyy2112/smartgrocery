@@ -10,7 +10,7 @@ Run these PowerShell commands from the repository root:
 Copy-Item .env.example .env
 docker compose up -d postgres redis
 Set-Location services/api
-py -3.12 -m venv .venv
+py -3.11 -m venv .venv
 & .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 & .\.venv\Scripts\python.exe -m alembic upgrade head
 & .\.venv\Scripts\python.exe scripts/seed.py
