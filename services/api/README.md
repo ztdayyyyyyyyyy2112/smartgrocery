@@ -1,82 +1,43 @@
 # SmartGrocery API
 
-FastAPI backend. Run this service on port 8000.
+FastAPI business service on port 8000. For the full repository layout and current product status, start with the [root README](../../README.md). This service requires PostgreSQL; Redis is required for the worker and realtime event test.
 
-## 1. Python environment
+## Local setup
 
-From `services/api`:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
-
-## 2. Database
-
-Copy the repo-root `.env.example` to `.env`.
-
-Create a PostgreSQL database that matches `DATABASE_URL`:
-
-- user: `smartgrocery`
-- password: `smartgrocery`
-- database: `smartgrocery`
-- port: `5432`
-
-If you use Docker Desktop instead of a local install:
+Run these PowerShell commands from the repository root:
 
 ```powershell
-docker compose up -d postgres
+Copy-Item .env.example .env
+docker compose up -d postgres redis
+Set-Location services/api
+py -3.12 -m venv .venv
+& .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+& .\.venv\Scripts\python.exe -m alembic upgrade head
+& .\.venv\Scripts\python.exe scripts/seed.py
+& .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
 ```
 
-Apply migrations:
+Open http://localhost:8000/health, http://localhost:8000/docs or http://localhost:8000/openapi.json. The local seed creates demo products and inventory; it does not supply historical sales for model training.
+
+If Docker is unavailable, start local PostgreSQL and Redis services matching the values in `.env`, then run the same migrations and seed commands. See the [backend runbook](../../docs/backend-runbook.md) for the Windows PostgreSQL service path.
+
+## Tests
+
+From the repository root, with PostgreSQL and Redis running:
 
 ```powershell
-cd services/api
-alembic upgrade head
+& .\services\api\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Seed deterministic catalog/inventory data:
+Use a separate test database by setting `DATABASE_URL` in the terminal before running migrations, seed and tests. The CI workflow does this automatically.
+
+## Optional event worker
+
+In separate terminals opened at `services/api`:
 
 ```powershell
-python scripts/seed.py
+& .\.venv\Scripts\python.exe -m celery -A app.worker.celery_app worker --loglevel=info --pool=solo
+& .\.venv\Scripts\python.exe -m celery -A app.worker.celery_app beat --loglevel=info
 ```
 
-Run the backend test suite from the repository root:
-
-```powershell
-cd ../..
-..\services\api\.venv\Scripts\python.exe -m pytest -q
-```
-
-## 3. Run the API
-
-```powershell
-cd services/api
-uvicorn app.main:app --reload --port 8000
-```
-
-Open:
-
-- Health: http://localhost:8000/health
-- Swagger: http://localhost:8000/docs
-
-Smoke checks:
-
-```powershell
-Invoke-RestMethod http://localhost:8000/health
-Invoke-RestMethod http://localhost:8000/api/v1/categories
-Invoke-RestMethod http://localhost:8000/api/v1/products
-```
-
-The API uses PostgreSQL through `DATABASE_URL`. Docker is optional; if Docker
-Desktop/WSL is unavailable, start the local PostgreSQL Windows service and run
-the same migrations against it.
-
-Load probe for release evidence (safe `/health` endpoint):
-
-```powershell
-python scripts/load_test.py --requests 50 --concurrency 10
-python scripts/load_test.py --requests 100 --concurrency 20
-python scripts/load_test.py --requests 200 --concurrency 40
-```
+Load probe commands and recorded results are in [release evidence](../../docs/release-evidence.md). The forecast job API accepts intelligence results, but model inference is still a separate team deliverable.

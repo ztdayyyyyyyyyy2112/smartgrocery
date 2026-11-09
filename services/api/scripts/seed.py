@@ -4,7 +4,7 @@ Run from services/api with the project virtualenv:
     python scripts/seed.py
 """
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 import sys
@@ -60,10 +60,11 @@ def seed() -> None:
                 ))
 
         db.flush()
+        today = date.today()
         batches = [
-            ("APL-FUJI-01", "LOT-APL-20261029", Decimal("30.000"), date(2026, 11, 12), Decimal("25000.00")),
-            ("MILK-1L-01", "LOT-MILK-20261029", Decimal("50.000"), date(2026, 11, 8), Decimal("21000.00")),
-            ("VEG-CARROT-01", "LOT-CARROT-20261029", Decimal("25.000"), date(2026, 11, 15), Decimal("14000.00")),
+            ("APL-FUJI-01", "LOT-APL-20261029", Decimal("30.000"), today + timedelta(days=14), Decimal("25000.00")),
+            ("MILK-1L-01", "LOT-MILK-20261029", Decimal("50.000"), today + timedelta(days=10), Decimal("21000.00")),
+            ("VEG-CARROT-01", "LOT-CARROT-20261029", Decimal("25.000"), today + timedelta(days=10), Decimal("14000.00")),
         ]
         for sku, lot_code, quantity, expiry, unit_cost in batches:
             exists = db.scalar(select(InventoryBatch).where(

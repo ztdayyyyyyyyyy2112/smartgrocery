@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -48,7 +49,7 @@ def test_forecast_job_result_success_and_failure() -> None:
     store_id = str(_store_id())
     product_id = _product_id()
     success_job = client.post("/api/v1/jobs/forecasts", headers=headers, json={"store_id": store_id}).json()["job_id"]
-    result = client.post(f"/api/v1/jobs/{success_job}/result", headers=headers, json={"status": "succeeded", "model_name": "seasonal_naive", "model_version": "test", "forecasts": [{"product_id": product_id, "target_date": "2026-11-06", "predicted_qty": 10}], "recommendations": []})
+    result = client.post(f"/api/v1/jobs/{success_job}/result", headers=headers, json={"status": "succeeded", "model_name": "seasonal_naive", "model_version": "test", "forecasts": [{"product_id": product_id, "target_date": (date.today() + timedelta(days=1)).isoformat(), "predicted_qty": 10}], "recommendations": []})
     assert result.status_code == 200
     assert result.json()["status"] == "succeeded"
     failed_job = client.post("/api/v1/jobs/forecasts", headers=headers, json={"store_id": store_id}).json()["job_id"]
@@ -86,7 +87,7 @@ def test_recommendation_can_convert_to_purchase_order() -> None:
         db.flush()
         db.add(SupplierProduct(supplier_id=supplier.id, product_id=product_id, unit_cost=12000))
         from app.models import ForecastJob
-        job = ForecastJob(store_id=store_id, created_by=merchant.id, horizon_days=7, as_of="2026-11-05")
+        job = ForecastJob(store_id=store_id, created_by=merchant.id, horizon_days=7, as_of=date.today())
         db.add(job)
         db.flush()
         recommendation = ReplenishmentRecommendation(job_id=job.id, store_id=store_id, product_id=product_id, suggested_qty=5, safety_stock=1, reorder_point=2, reason="test", status=RecommendationStatus.PENDING)

@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -32,7 +33,7 @@ def test_purchase_order_lifecycle_and_receiving() -> None:
     po_id = po.json()["id"]
     assert client.post(f"/api/v1/purchase-orders/{po_id}/approve", headers=headers).json()["status"] == "approved"
     assert client.post(f"/api/v1/purchase-orders/{po_id}/send", headers=headers).json()["status"] == "sent"
-    received = client.post(f"/api/v1/purchase-orders/{po_id}/receive", json={"items": [{"product_id": PRODUCT_ID, "quantity": "4", "lot_code": f"LOT-{uuid4().hex}", "expiry_date": "2026-12-31", "unit_cost": "12000"}]}, headers=headers)
+    received = client.post(f"/api/v1/purchase-orders/{po_id}/receive", json={"items": [{"product_id": PRODUCT_ID, "quantity": "4", "lot_code": f"LOT-{uuid4().hex}", "expiry_date": (date.today() + timedelta(days=30)).isoformat(), "unit_cost": "12000"}]}, headers=headers)
     assert received.status_code == 200
     assert received.json()["status"] == "received"
 
