@@ -19,7 +19,7 @@ Track the acceptance checklist in [release readiness #46](https://github.com/ztd
 
 ## Run locally
 
-Prerequisites: Python 3.12, Node.js 22, npm, and Docker Compose (or local PostgreSQL and Redis). Commands below use PowerShell from the repository root.
+Prerequisites: Python 3.11, Node.js 22, npm, and Docker Compose (or local PostgreSQL and Redis). Commands below use PowerShell from the repository root.
 
 1. Create local configuration and start the two infrastructure services:
 
@@ -32,7 +32,7 @@ Prerequisites: Python 3.12, Node.js 22, npm, and Docker Compose (or local Postgr
 
    ```powershell
    Set-Location services/api
-   py -3.12 -m venv .venv
+   py -3.11 -m venv .venv
    & .\.venv\Scripts\python.exe -m pip install -r requirements.txt
    & .\.venv\Scripts\python.exe -m alembic upgrade head
    & .\.venv\Scripts\python.exe scripts/seed.py
