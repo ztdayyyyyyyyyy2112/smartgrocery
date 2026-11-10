@@ -28,6 +28,83 @@ services:
       timeout: 5s
       retries: 5
 
+  intelligence:
+    build:
+      context: ./services/intelligence
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg://smartgrocery:smartgrocery@postgres:5432/smartgrocery
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      INTELLIGENCE_URL: http://intelligence:8001
+      FORECAST_AUTORUN: "true"
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-local-secret}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      intelligence:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    command: python -m celery -A app.worker.celery_app worker --loglevel=info --pool=solo
+    environment:
+      DATABASE_URL: postgresql+psycopg://smartgrocery:smartgrocery@postgres:5432/smartgrocery
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      INTELLIGENCE_URL: http://intelligence:8001
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-local-secret}
+    depends_on:
+      api:
+        condition: service_healthy
+
+  beat:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    command: python -m celery -A app.worker.celery_app beat --loglevel=info
+    environment:
+      DATABASE_URL: postgresql+psycopg://smartgrocery:smartgrocery@postgres:5432/smartgrocery
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-local-secret}
+    depends_on:
+      api:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   redis_data:

@@ -40,11 +40,55 @@ def run_outbox_batch(self, limit: int = 50) -> dict[str, int]:
 
 @celery_app.task
 def refresh_forecast_jobs() -> dict[str, int]:
-    """Report queued jobs without inventing forecast output."""
-    from sqlalchemy import func, select
+    """Dispatch queued forecast jobs as a recovery sweep."""
+    from sqlalchemy import select
     from app.db.session import SessionLocal
     from app.models import ForecastJob, ForecastJobStatus
 
     with SessionLocal() as db:
-        queued = db.scalar(select(func.count()).select_from(ForecastJob).where(ForecastJob.status == ForecastJobStatus.QUEUED)) or 0
-    return {"queued": int(queued)}
+        ids = list(db.scalars(select(ForecastJob.id).where(ForecastJob.status == ForecastJobStatus.QUEUED).limit(50)).all())
+    for job_id in ids:
+        run_forecast_job.delay(str(job_id))
+    return {"queued": len(ids)}
+
+
+@celery_app.task
+def run_forecast_job(job_id: str) -> dict:
+    """Run real inference, then store forecasts/recommendations through the backend contract."""
+    from uuid import UUID
+    from sqlalchemy import select
+    from app.api.forecast import ForecastJobResult, complete_forecast_job
+    from app.db.session import SessionLocal
+    from app.intelligence import build_batch, fetch_batch, to_forecast_result
+    from app.models import ForecastJob, ForecastJobStatus, Store
+
+    key = UUID(job_id)
+    with SessionLocal.begin() as db:
+        job = db.scalar(select(ForecastJob).where(ForecastJob.id == key).with_for_update())
+        if job is None:
+            return {"status": "missing"}
+        if job.status != ForecastJobStatus.QUEUED:
+            return {"status": job.status.value}
+        job.status = ForecastJobStatus.RUNNING
+
+    try:
+        with SessionLocal() as db:
+            job = db.get(ForecastJob, key)
+            store = db.get(Store, job.store_id)
+            requests, product_ids = build_batch(db, store, job.horizon_days)
+        results = fetch_batch(requests)
+        as_of, payload = to_forecast_result(results, product_ids, store.code)
+        with SessionLocal() as db:
+            job = db.get(ForecastJob, key)
+            job.as_of = as_of  # The synthetic dataset's latest observed date is authoritative.
+            db.commit()
+        with SessionLocal() as db:
+            saved = complete_forecast_job(key, ForecastJobResult(**payload), db, None)
+        return saved
+    except Exception as exc:
+        with SessionLocal() as db:
+            job = db.get(ForecastJob, key)
+            if job is not None and job.status == ForecastJobStatus.RUNNING:
+                complete_forecast_job(key, ForecastJobResult(status=ForecastJobStatus.FAILED,
+                                      error_message=f"{type(exc).__name__}: {str(exc)[:400]}"), db, None)
+        return {"status": "failed", "error": str(exc)[:400]}

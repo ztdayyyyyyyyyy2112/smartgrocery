@@ -128,6 +128,19 @@ def list_purchase_orders(db: Session = Depends(get_db), _user=Depends(merchant_a
     return [{"id": str(po.id), "status": po.status.value, "store_id": str(po.store_id), "supplier_id": str(po.supplier_id)} for po in orders]
 
 
+@router.get("/purchase-orders/{po_id}")
+def get_purchase_order(po_id: UUID, db: Session = Depends(get_db), _user=Depends(merchant_admin)) -> dict:
+    po = db.get(PurchaseOrder, po_id)
+    if po is None:
+        raise HTTPException(status_code=404, detail="Purchase order not found")
+    items = db.scalars(select(PurchaseOrderItem).where(PurchaseOrderItem.purchase_order_id == po_id)).all()
+    return {"id": str(po.id), "status": po.status.value, "store_id": str(po.store_id),
+            "supplier_id": str(po.supplier_id), "items": [
+                {"product_id": str(item.product_id), "quantity_ordered": str(item.quantity_ordered),
+                 "quantity_received": str(item.quantity_received), "unit_cost": str(item.unit_cost)}
+                for item in items]}
+
+
 def _transition(po_id: UUID, expected: PurchaseOrderStatus, target: PurchaseOrderStatus, db: Session, user, *, approval: bool = False) -> dict:
     db.rollback()
     with db.begin():

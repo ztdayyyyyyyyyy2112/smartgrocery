@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     jwt_refresh_token_days: int = 7
     celery_broker_url: str = "redis://localhost:6379/0"
     celery_result_backend: str = "redis://localhost:6379/1"
+    intelligence_url: str = "http://localhost:8001"
+    forecast_autorun: bool = False
     database_url: str = (
         "postgresql://smartgrocery:smartgrocery@localhost:5432/smartgrocery"
     )

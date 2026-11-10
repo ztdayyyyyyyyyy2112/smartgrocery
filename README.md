@@ -4,7 +4,7 @@ SmartGrocery is a grocery commerce prototype with a Next.js storefront and merch
 
 ## Current status
 
-The backend includes authentication, catalog, orders, inventory batches, purchase orders, forecast job APIs, outbox processing and tests. The frontend is a visual shell: catalog data is mocked, and login, cart, checkout and several dashboard views are placeholders. `services/intelligence` contains a reproducible synthetic-data forecasting pipeline and a standalone inference API. Its Store–SKU codes do not yet match the backend seed catalog, so the backend does not consume its output. The backend integration test posts a prepared forecast result; it does not run model inference. This repository is a prototype in progress, not a complete end-to-end release.
+The demo integrates the Next.js storefront and merchant dashboard with the FastAPI business API, PostgreSQL, Redis/Celery, and the standalone intelligence service. The canonical demo catalog uses `S001`–`S003` and `SKU001`–`SKU032`; database UUIDs remain internal. Forecasts use synthetic historical sales ending 09/11/2026 and live inventory from the backend. This is an academic demo, not a production commerce or payment system.
 
 Track the acceptance checklist in [release readiness #46](https://github.com/ztdayyyyyyyyyy2112/smartgrocery/issues/46). The `v1.0.0` tag records an earlier **backend milestone**, not a full-product release.
 
@@ -16,9 +16,27 @@ Track the acceptance checklist in [release readiness #46](https://github.com/ztd
 - `tests/api` — backend tests; `tests/intelligence` — intelligence tests.
 - `docs/architecture` and `docs/api` — design and API contracts.
 - `docs/release-evidence.md` — results recorded by the backend team.
-- `docs/api/intelligence-integration-status.md` — current AI/backend contract gap and integration steps.
+- `database/demo` — tracked shared Store–SKU catalog for both sides of the demo.
+- `scripts/demo_smoke.py` — automated checkout-to-receiving acceptance check.
 
-## Run locally
+## Run the complete demo with Docker Compose
+
+Install Docker Desktop with Compose. From the repository root in PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+docker compose up -d --build
+docker compose exec api python scripts/seed.py
+python scripts/demo_smoke.py
+```
+
+Open http://localhost:3000. AI Swagger is at http://localhost:8001/docs and business API Swagger at http://localhost:8000/docs. First build trains the model from synthetic data and may take several minutes. Demo accounts: `customer@smartgrocery.local` and `merchant@smartgrocery.local`, password `DemoPass123!` (change with `SG_DEMO_PASSWORD` when seeding manually). Keep these credentials local; do not deploy the demo seed publicly.
+
+Manual click path: customer login → add `SKU005` to cart → checkout at `S001` → merchant login → Inventory → Forecasting (run job; wait for succeeded) → Recommendations (approve and create PO) → Procurement (approve, send, receive) → Inventory (observe increase). Merchant may fulfil the customer order from Orders. `docs/demo-runbook.md` records expected results and troubleshooting.
+
+Stop with `docker compose down`; add `-v` only when intentionally deleting the demo database.
+
+## Run services separately
 
 Prerequisites: Python 3.11, Node.js 22, npm, and Docker Compose (or local PostgreSQL and Redis). Commands below use PowerShell from the repository root.
 
@@ -50,7 +68,7 @@ Prerequisites: Python 3.11, Node.js 22, npm, and Docker Compose (or local Postgr
    npm run dev
    ```
 
-   Open http://localhost:3000. The pages render, but the storefront is not connected to the API yet.
+   Open http://localhost:3000. The storefront calls the API at `NEXT_PUBLIC_API_URL`.
 
 4. For event processing, run these optional commands in separate terminals from `services/api` using its virtual environment:
 
@@ -69,7 +87,7 @@ Prerequisites: Python 3.11, Node.js 22, npm, and Docker Compose (or local Postgr
    & .\.venv\Scripts\python.exe -m uvicorn src.inference.api:app --port 8001
    ```
 
-   Open http://localhost:8001/docs. The service uses synthetic Store–SKU data and is not yet called by the business API. See the [integration status](docs/api/intelligence-integration-status.md).
+   Open http://localhost:8001/docs. Set `FORECAST_AUTORUN=true`, keep a Celery worker running, and rerun `scripts/seed.py` after migrating the database.
 
 ## Checks
 
@@ -82,7 +100,7 @@ npm run lint
 npm run build
 ```
 
-The CI workflow runs the web and backend checks for pull requests. See [backend release evidence](docs/release-evidence.md) for recorded backend results. A clean-run result for the entire product is still required.
+CI runs web, backend, AI and the Docker Compose demo smoke check. See [backend release evidence](docs/release-evidence.md) for older backend-only results.
 
 After running the intelligence pipeline, check its tests with `& .\services\intelligence\.venv\Scripts\python.exe -m pytest tests/intelligence -q` from the repository root. The intelligence suite passed 46 tests locally on 10 November 2026. CI regenerates the synthetic data and model before running this suite.
 

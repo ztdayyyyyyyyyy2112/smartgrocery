@@ -8,6 +8,7 @@ import { useState } from "react";
 const navigation = [
   { label: "Home", href: "/" },
   { label: "Products", href: "/products" },
+  { label: "Orders", href: "/orders" },
   { label: "Merchant", href: "/dashboard" },
 ];
 

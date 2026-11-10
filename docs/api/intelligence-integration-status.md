@@ -1,18 +1,9 @@
-# Intelligence integration status — 10/11/2026
+# Intelligence integration — demo contract
 
-Code Bảo Khoa đã được nhập vào `services/intelligence`, kèm tài liệu, bài test tại `tests/intelligence` và bằng chứng tái tạo. Dịch vụ AI hoạt động độc lập; frontend vẫn chỉ gọi backend chính. **Chưa nối kết quả AI vào các bảng forecast/recommendation của backend.**
+The tracked `database/demo/*.csv` catalog uses the same business keys as the intelligence dataset: `Store.code = S001…S003`, `Product.sku = SKU001…SKU032`. Existing legacy seed rows are preserved. PostgreSQL UUIDs remain internal and are mapped in `services/api/app/intelligence.py`.
 
-## Lý do chưa thể nối trực tiếp
+For each forecast job the backend worker reads sellable non-expired batch stock and reservations, plus quantities in sent purchase orders. It sends these live quantities to the AI batch endpoint. The AI returns 7-day demand and replenishment calculations based on the synthetic historical sales ending 09/11/2026. The worker validates Store–SKU identities, maps the SKU back to the product UUID, and stores forecasts and positive replenishment recommendations. The merchant alone approves a recommendation and creates/receives a purchase order.
 
-- Bộ dữ liệu AI là dữ liệu tổng hợp, dùng `store_id` như `S001` và `sku_id` như `SKU005`.
-- Backend seed hiện dùng `Store.code = SG-HCM-01`, sản phẩm `APL-FUJI-01`, `MILK-1L-01`, `VEG-CARROT-01`, với UUID nội bộ. Không có cặp Store–SKU chung để suy luận hợp lệ.
-- `POST /api/v1/jobs/{job_id}/result` của backend yêu cầu `product_id` UUID thật và ngày dự báo trong cửa sổ job. Không được gắn dự báo SKU tổng hợp vào sản phẩm khác chỉ để làm demo.
+The synthetic sales history is fixed; checkout changes the inventory input and thus the replenishment decision, but it does not retrain the forecasting model. Every job records the AI history's `as_of` date, so the dashboard must show that date. Do not present this as a rolling production forecast. To use new real sales data, add a verified ingestion/training process and rerun model evaluation.
 
-## Việc còn lại để tích hợp thật
-
-1. Chọn một bộ mã Store–SKU chung. Cách phù hợp cho demo: bổ sung catalog/seed backend bằng chính các mã tổng hợp của AI, hoặc xuất dữ liệu order/inventory backend đúng schema AI rồi train lại. Ghi rõ dữ liệu tổng hợp trong demo/báo cáo.
-2. Viết adapter trong backend: lấy tồn khả dụng, reserved, on-order, lead time và giá vốn từ database; gọi AI service nội bộ; chuyển `sku_id` về `Product.id`, `store_id` về `Store.id`.
-3. Worker xử lý `ForecastJob` từ QUEUED → RUNNING → SUCCEEDED/FAILED, ghi forecast/recommendation vào DB; không dùng endpoint nhập kết quả thủ công cho luồng sản phẩm.
-4. Kiểm thử end-to-end với database mới: seed → chạy job → xem forecast/recommendation qua API chính → duyệt → tạo PO → nhận hàng. Frontend chỉ kết nối API chính.
-
-Đã kiểm tra local: pipeline `--regenerate-data` hoàn thành với LightGBM và 46 bài test AI qua. Model nhị phân, dữ liệu thô/processed và virtualenv chỉ ở máy local; clone sạch sinh lại bằng lệnh trong README.
+`FORECAST_AUTORUN=true` enables Celery dispatch when a job is created. It is set in Docker Compose and `.env.example`; API CI leaves it false to preserve focused backend tests. Failures mark the job `failed` with an error message; the frontend can retry by creating a new job. The full Docker demo is checked by `scripts/demo_smoke.py` in CI.
