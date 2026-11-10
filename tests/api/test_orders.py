@@ -26,10 +26,26 @@ def restore_checkout_fixture_stock() -> None:
 
 def _token() -> str:
     email = f"order-{uuid4().hex}@example.com"
-    response = client.post("/api/v1/auth/register", json={"email": email, "password": "password123", "full_name": "Order Test"})
+    response = client.post("/api/v1/auth/register", json={"email": email, "password": "password123", "full_name": "Order Test", "phone": "0900000000", "default_address": "1 Demo Street", "privacy_consent": True})
     assert response.status_code == 201
     login = client.post("/api/v1/auth/login", json={"email": email, "password": "password123"})
     return login.json()["access_token"]
+
+
+def _legacy_merchant_token() -> str:
+    from app.models import Store
+    from app.security import create_token, hash_password
+    from datetime import timedelta
+    with SessionLocal.begin() as db:
+        from uuid import UUID
+        store = db.get(Store, UUID(STORE_ID))
+        merchant = db.get(User, store.merchant_id) if store.merchant_id else None
+        if merchant is None:
+            merchant = User(email=f"legacy-merchant-{uuid4().hex}@example.com", full_name="Legacy Merchant", password_hash=hash_password("password123"), role=UserRole.MERCHANT)
+            db.add(merchant)
+            db.flush()
+            store.merchant_id = merchant.id
+        return create_token(merchant, token_type="access", expires_delta=timedelta(minutes=15))
 
 
 def test_checkout_reserves_stock_and_replays_idempotently() -> None:
@@ -69,24 +85,17 @@ def test_cancel_releases_reservation() -> None:
 
 def test_merchant_can_fulfil_order() -> None:
     token = _token()
-    login_user = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}).json()
-    with SessionLocal.begin() as db:
-        user = db.scalar(select(User).where(User.id == login_user["id"]))
-        user.role = UserRole.MERCHANT
     headers = {"Authorization": f"Bearer {token}", "Idempotency-Key": f"test-{uuid4().hex}"}
     created = client.post("/api/v1/orders", json={"store_id": STORE_ID, "items": [{"product_id": MILK_ID, "quantity": "1"}]}, headers=headers)
     assert created.status_code == 201
-    fulfilled = client.post(f"/api/v1/orders/{created.json()['id']}/fulfil", headers={"Authorization": f"Bearer {token}"})
+    merchant_token = _legacy_merchant_token()
+    fulfilled = client.post(f"/api/v1/orders/{created.json()['id']}/fulfil", headers={"Authorization": f"Bearer {merchant_token}"})
     assert fulfilled.status_code == 200
     assert fulfilled.json()["status"] == "fulfilled"
 
 
 def test_merchant_can_read_inventory_alerts() -> None:
-    token = _token()
-    user_data = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}).json()
-    with SessionLocal.begin() as db:
-        user = db.scalar(select(User).where(User.id == user_data["id"]))
-        user.role = UserRole.MERCHANT
+    token = _legacy_merchant_token()
     response = client.get("/api/v1/inventory", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert len(response.json()) >= 1

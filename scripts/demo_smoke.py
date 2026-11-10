@@ -39,7 +39,9 @@ def main():
     store = next(item for item in call("/stores") if item["code"] == "S001")
     product = next(item for item in call("/products?page_size=100")["items"] if item["sku"] == "SKU005")
     stock_before = next(item for item in call(f"/inventory?store_id={store['id']}", token=merchant) if item["sku"] == "SKU005")
-    order = call("/orders", "POST", {"store_id": store["id"], "items": [{"product_id": product["id"], "quantity": 1}]},
+    order = call("/orders", "POST", {"store_id": store["id"], "recipient_name": "Demo Customer",
+                 "delivery_phone": "0900000000", "delivery_address": "1 Demo Street, Ho Chi Minh City",
+                 "items": [{"product_id": product["id"], "quantity": 1}]},
                  customer, str(uuid.uuid4()))
     assert order["status"] == "confirmed"
     stock_reserved = next(item for item in call(f"/inventory?store_id={store['id']}", token=merchant) if item["sku"] == "SKU005")

@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.models import DemandForecast, ForecastJob, ForecastJobStatus, PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus, RecommendationStatus, ReplenishmentRecommendation, Store, Supplier, SupplierProduct, UserRole
 from app.security import require_roles
+from app.store_access import ensure_store_access, merchant_store_id
 
 router = APIRouter(tags=["forecast"])
 merchant_admin = require_roles(UserRole.MERCHANT, UserRole.ADMIN)
@@ -51,6 +52,7 @@ class RecommendationDecision(BaseModel):
 
 @router.post("/jobs/forecasts", status_code=status.HTTP_202_ACCEPTED)
 def create_forecast_job(payload: ForecastJobRequest, db: Session = Depends(get_db), user=Depends(merchant_admin)) -> dict:
+    ensure_store_access(db, user, payload.store_id)
     if db.get(Store, payload.store_id) is None:
         raise HTTPException(status_code=404, detail="Store not found")
     job = ForecastJob(store_id=payload.store_id, as_of=payload.as_of, horizon_days=payload.horizon_days, created_by=user.id, status=ForecastJobStatus.QUEUED)
@@ -75,6 +77,7 @@ def get_forecast_job(job_id: UUID, db: Session = Depends(get_db), _user=Depends(
     job = db.get(ForecastJob, job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Forecast job not found")
+    ensure_store_access(db, _user, job.store_id)
     return {"job_id": str(job.id), "status": job.status.value, "as_of": job.as_of.isoformat(),
             "error_message": job.error_message}
 
@@ -86,6 +89,8 @@ def complete_forecast_job(job_id: UUID, payload: ForecastJobResult, db: Session 
         job = db.scalar(select(ForecastJob).where(ForecastJob.id == job_id).with_for_update())
         if job is None:
             raise HTTPException(status_code=404, detail="Forecast job not found")
+        if _user is not None:
+            ensure_store_access(db, _user, job.store_id)
         if job.status not in {ForecastJobStatus.QUEUED, ForecastJobStatus.RUNNING}:
             raise HTTPException(status_code=409, detail="Forecast job cannot be completed")
         if payload.status == ForecastJobStatus.FAILED:
@@ -117,6 +122,8 @@ def complete_forecast_job(job_id: UUID, payload: ForecastJobResult, db: Session 
 @router.get("/forecasts")
 def list_forecasts(store_id: UUID | None = None, product_id: UUID | None = None, from_: date | None = Query(default=None, alias="from"), to: date | None = None, model_name: str | None = None, db: Session = Depends(get_db), _user=Depends(merchant_admin)) -> list[dict]:
     stmt = select(DemandForecast).order_by(DemandForecast.target_date)
+    owned = merchant_store_id(db, _user)
+    if owned is not None: stmt = stmt.where(DemandForecast.store_id == owned)
     if store_id: stmt = stmt.where(DemandForecast.store_id == store_id)
     if product_id: stmt = stmt.where(DemandForecast.product_id == product_id)
     if from_: stmt = stmt.where(DemandForecast.target_date >= from_)
@@ -128,14 +135,17 @@ def list_forecasts(store_id: UUID | None = None, product_id: UUID | None = None,
 @router.get("/recommendations")
 def list_recommendations(status_filter: RecommendationStatus | None = Query(default=None, alias="status"), store_id: UUID | None = None, db: Session = Depends(get_db), _user=Depends(merchant_admin)) -> list[dict]:
     stmt = select(ReplenishmentRecommendation).order_by(ReplenishmentRecommendation.created_at.desc())
+    owned = merchant_store_id(db, _user)
+    if owned is not None: stmt = stmt.where(ReplenishmentRecommendation.store_id == owned)
     if status_filter: stmt = stmt.where(ReplenishmentRecommendation.status == status_filter)
     if store_id: stmt = stmt.where(ReplenishmentRecommendation.store_id == store_id)
     return [{"id": str(x.id), "store_id": str(x.store_id), "product_id": str(x.product_id), "suggested_qty": str(x.suggested_qty), "safety_stock": str(x.safety_stock), "reorder_point": str(x.reorder_point), "meu_score": str(x.meu_score) if x.meu_score is not None else None, "reason": x.reason, "status": x.status.value} for x in db.scalars(stmt).all()]
 
 
-def _set_recommendation_status(recommendation_id: UUID, target: RecommendationStatus, db: Session) -> dict:
+def _set_recommendation_status(recommendation_id: UUID, target: RecommendationStatus, db: Session, user) -> dict:
     recommendation = db.get(ReplenishmentRecommendation, recommendation_id)
     if recommendation is None: raise HTTPException(status_code=404, detail="Recommendation not found")
+    ensure_store_access(db, user, recommendation.store_id)
     if recommendation.status != RecommendationStatus.PENDING: raise HTTPException(status_code=409, detail="Recommendation cannot be changed")
     recommendation.status = target
     db.commit()
@@ -148,6 +158,7 @@ def approve_recommendation(recommendation_id: UUID, payload: RecommendationDecis
     recommendation = db.get(ReplenishmentRecommendation, recommendation_id)
     if recommendation is None:
         raise HTTPException(status_code=404, detail="Recommendation not found")
+    ensure_store_access(db, user, recommendation.store_id)
     if recommendation.status != RecommendationStatus.PENDING:
         raise HTTPException(status_code=409, detail="Recommendation cannot be changed")
     if not payload.convert_to_po:
@@ -156,7 +167,8 @@ def approve_recommendation(recommendation_id: UUID, payload: RecommendationDecis
         return {"id": str(recommendation.id), "status": recommendation.status.value}
     if payload.supplier_id is None:
         raise HTTPException(status_code=422, detail="supplier_id is required when convert_to_po is true")
-    if db.get(Supplier, payload.supplier_id) is None:
+    supplier = db.get(Supplier, payload.supplier_id)
+    if supplier is None or supplier.store_id != recommendation.store_id:
         raise HTTPException(status_code=404, detail="Supplier not found")
     supplier_product = db.get(SupplierProduct, (payload.supplier_id, recommendation.product_id))
     if supplier_product is None:
@@ -172,4 +184,4 @@ def approve_recommendation(recommendation_id: UUID, payload: RecommendationDecis
 
 @router.post("/recommendations/{recommendation_id}/reject")
 def reject_recommendation(recommendation_id: UUID, db: Session = Depends(get_db), _user=Depends(merchant_admin)) -> dict:
-    return _set_recommendation_status(recommendation_id, RecommendationStatus.REJECTED, db)
+    return _set_recommendation_status(recommendation_id, RecommendationStatus.REJECTED, db, _user)

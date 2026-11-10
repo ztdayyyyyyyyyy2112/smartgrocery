@@ -1,7 +1,10 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Badge from "../ui/Badge";
+import { api, logout, session, type Store, type User } from "../../lib/demo";
 
 const titleMap: Record<string, string> = {
   "/dashboard": "Overview",
@@ -15,6 +18,10 @@ const titleMap: Record<string, string> = {
 
 export default function DashboardHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [storeName, setStoreName] = useState("");
+  useEffect(() => { const current = session()?.user; if (!current) return; queueMicrotask(() => setUser(current)); api<Store[]>("/api/v1/stores").then(stores => setStoreName(stores.find(x => x.id === current.store_id)?.name || "")).catch(() => {}); }, []);
   const currentTitle = titleMap[pathname] ?? "Overview";
 
   return (
@@ -33,13 +40,14 @@ export default function DashboardHeader() {
           <Badge tone="success">Live demo</Badge>
           <div className="flex items-center gap-3 rounded-xl border border-border bg-background px-3 py-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-base font-bold text-white">
-              M
+              {user?.full_name?.slice(0, 1) || "M"}
             </span>
             <div className="hidden text-left sm:block">
-              <p className="text-sm font-semibold text-foreground">Merchant</p>
-              <p className="text-xs text-muted">Operations view</p>
+              <p className="text-sm font-semibold text-foreground">{user?.full_name || "Người bán"}</p>
+              <p className="text-xs text-muted">{storeName || "Cửa hàng của tôi"}</p>
             </div>
           </div>
+          <button type="button" onClick={() => { logout(); router.push("/"); }} className="rounded-lg border px-3 py-2 text-sm">Đăng xuất</button>
         </div>
       </div>
     </header>

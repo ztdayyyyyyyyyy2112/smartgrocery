@@ -31,6 +31,9 @@ app = FastAPI(
 async def request_id_middleware(request: Request, call_next):
     request_id = request.headers.get("X-Request-ID") or str(uuid4())
     request.state.request_id = request_id
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"} and (request.cookies.get("sg_access") or request.cookies.get("sg_refresh")) and not request.headers.get("Authorization"):
+        if request.headers.get("Origin") != "http://localhost:3000":
+            return JSONResponse(status_code=403, content={"detail": "Invalid request origin"})
     try:
         response = await call_next(request)
     except IntegrityError:
@@ -60,7 +63,7 @@ app.include_router(forecast_router, prefix="/api/v1")
 
 @app.websocket("/ws/events")
 async def events_websocket(websocket: WebSocket):
-    token = websocket.query_params.get("access_token")
+    token = websocket.query_params.get("access_token") or websocket.cookies.get("sg_access")
     if not token:
         await websocket.close(code=1008, reason="Authentication required")
         return
@@ -71,6 +74,19 @@ async def events_websocket(websocket: WebSocket):
     except (jwt.PyJWTError, ValueError):
         await websocket.close(code=1008, reason="Invalid authentication")
         return
+    from uuid import UUID
+    from app.db.session import SessionLocal
+    from app.models import Store, User
+    from sqlalchemy import select
+    with SessionLocal() as db:
+        user = db.get(User, UUID(payload["sub"]))
+        if user is None or not user.is_active:
+            await websocket.close(code=1008, reason="Inactive account")
+            return
+        owned_store = None if user.role.value == "admin" else db.scalar(select(Store.id).where(Store.merchant_id == user.id))
+        if user.role.value == "merchant" and owned_store is None:
+            await websocket.close(code=1008, reason="No assigned store")
+            return
     await manager.connect(websocket)
     redis_client = redis_asyncio.from_url(get_settings().celery_broker_url, decode_responses=True)
     subscriber = redis_client.pubsub()
@@ -80,7 +96,9 @@ async def events_websocket(websocket: WebSocket):
             message = await subscriber.get_message(ignore_subscribe_messages=True, timeout=1.0)
             if message and message.get("type") == "message":
                 try:
-                    await websocket.send_json(json.loads(message["data"]))
+                    event = json.loads(message["data"])
+                    if owned_store is None or event.get("payload", {}).get("store_id") == str(owned_store):
+                        await websocket.send_json(event)
                 except (TypeError, json.JSONDecodeError):
                     continue
 

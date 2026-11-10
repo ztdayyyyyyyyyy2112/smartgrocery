@@ -1,16 +1,18 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { addToCart, api, money, type Product } from "../../lib/demo";
+import Image from "next/image";
+import { addToCart, api, money, selectedStore, type Product } from "../../lib/demo";
 export default function ProductDetail({ id }: { id: string }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [error, setError] = useState("");
   const [added, setAdded] = useState(false);
-  useEffect(() => { api<Product>(`/api/v1/products/${id}`).then(setProduct).catch(e => setError(e.message)); }, [id]);
+  useEffect(() => { const store = selectedStore(); api<Product>(`/api/v1/products/${id}${store ? `?store_id=${store}` : ""}`).then(setProduct).catch(e => setError(e.message)); }, [id]);
   return <section className="sg-container py-14"><Link href="/products" className="text-primary underline">← Sản phẩm</Link>
     {error && <p role="alert" className="mt-6 text-red-700">{error}</p>}
     {!product && !error && <p className="mt-6">Đang tải…</p>}
     {product && <div className="mt-6 max-w-2xl rounded-2xl border border-border bg-white p-8">
+      {product.image_url && <div className="relative mb-4 aspect-[4/3]"><Image src={product.image_url} alt={product.name} fill sizes="(max-width: 768px) 100vw, 700px" className="rounded-xl object-cover" /></div>}
       <p className="text-sm text-muted">{product.sku}</p><h1 className="mt-2 text-3xl font-bold">{product.name}</h1>
       <p className="mt-4">{product.description || "Sản phẩm trong catalog demo SmartGrocery."}</p>
       <p className="mt-4 text-2xl font-bold text-primary-dark">{money(product.selling_price)}</p>

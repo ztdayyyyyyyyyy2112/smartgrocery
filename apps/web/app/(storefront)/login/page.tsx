@@ -8,12 +8,15 @@ export default function LoginPage() {
   const [email, setEmail] = useState("customer@smartgrocery.example.com");
   const [password, setPassword] = useState("DemoPass123!");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
     try {
-      const result = await api<Session>(`/api/v1/auth/${register ? "register" : "login"}`, { method: "POST", body: JSON.stringify(register ? { email, password, full_name: name } : { email, password }) });
+      const result = await api<Session>(`/api/v1/auth/${register ? "register" : "login"}`, { method: "POST", body: JSON.stringify(register ? { email, password, full_name: name, phone, default_address: address, privacy_consent: consent } : { email, password }) });
       saveSession(result);
       router.push(result.user.role === "customer" ? "/products" : "/dashboard");
     } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
@@ -23,8 +26,11 @@ export default function LoginPage() {
     <p className="mt-3 text-sm text-muted">Demo: customer@smartgrocery.example.com hoặc merchant@smartgrocery.example.com · mật khẩu DemoPass123!</p>
     <form onSubmit={submit} className="mt-7 space-y-4">
       {register && <label className="block">Họ tên<input required value={name} onChange={e => setName(e.target.value)} className="mt-1 w-full rounded-xl border border-border p-3" /></label>}
+      {register && <label className="block">Số điện thoại<input required minLength={8} value={phone} onChange={e => setPhone(e.target.value)} className="mt-1 w-full rounded-xl border border-border p-3" /></label>}
+      {register && <label className="block">Địa chỉ giao hàng mặc định<textarea required minLength={5} value={address} onChange={e => setAddress(e.target.value)} className="mt-1 w-full rounded-xl border border-border p-3" /></label>}
       <label className="block">Email<input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="mt-1 w-full rounded-xl border border-border p-3" /></label>
       <label className="block">Mật khẩu<input type="password" required value={password} onChange={e => setPassword(e.target.value)} className="mt-1 w-full rounded-xl border border-border p-3" /></label>
+      {register && <label className="flex gap-2 text-sm"><input type="checkbox" required checked={consent} onChange={e => setConsent(e.target.checked)} /><span>Tôi đồng ý lưu và chia sẻ tên, số điện thoại, địa chỉ với cửa hàng xử lý đơn hàng của tôi. Thông tin này được lưu tại backend.</span></label>}
       {error && <p role="alert" className="text-red-700">{error}</p>}
       <button disabled={busy} className="w-full rounded-xl bg-primary px-4 py-3 font-semibold text-white disabled:opacity-50">{busy ? "Đang xử lý…" : register ? "Đăng ký" : "Đăng nhập"}</button>
     </form>

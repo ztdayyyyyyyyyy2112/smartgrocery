@@ -3,7 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { cart, logout, session, type Session } from "../../lib/demo";
 
 const navigation = [
   { label: "Home", href: "/" },
@@ -33,7 +35,16 @@ function CartIcon({ className }: { className: string }) {
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [current, setCurrent] = useState<Session | null>(null);
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const sync = () => { setCurrent(session()); setCount(cart().reduce((sum, item) => sum + item.quantity, 0)); };
+    sync(); window.addEventListener("smartgrocery:session", sync); window.addEventListener("smartgrocery:cart", sync); window.addEventListener("storage", sync);
+    return () => { window.removeEventListener("smartgrocery:session", sync); window.removeEventListener("smartgrocery:cart", sync); window.removeEventListener("storage", sync); };
+  }, []);
+  const nav = navigation.filter(item => item.href !== "/dashboard" || current?.user.role === "merchant" || current?.user.role === "admin");
 
   function isActive(href: string) {
     if (href === "/") {
@@ -87,16 +98,12 @@ export default function Navbar() {
             aria-label="Shopping cart"
             title="Shopping cart"
             aria-current={pathname === "/cart" ? "page" : undefined}
-            className="flex h-11 w-11 items-center justify-center rounded-lg text-white transition hover:bg-white/10"
+            className="relative flex h-11 w-11 items-center justify-center rounded-lg text-white transition hover:bg-white/10"
           >
             <CartIcon className="h-7 w-7 text-white" />
+            {count > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-red-600 px-1.5 text-xs font-bold text-white">{count}</span>}
           </Link>
-          <Link
-            href="/login"
-            className="rounded-lg bg-white px-4 py-2.5 font-semibold text-primary-dark transition hover:bg-primary-light"
-          >
-            Login
-          </Link>
+          {current ? <div className="flex items-center gap-2 text-sm text-white"><span>{current.user.full_name} · {current.user.role === "customer" ? "Khách hàng" : "Người bán"}</span><button onClick={() => { logout(); router.push("/"); }} className="rounded-lg bg-white px-3 py-2 text-primary-dark">Đăng xuất</button></div> : <Link href="/login" className="rounded-lg bg-white px-4 py-2.5 font-semibold text-primary-dark">Đăng nhập</Link>}
         </div>
 
         <button
@@ -115,7 +122,7 @@ export default function Navbar() {
 
       <nav aria-label="Main navigation" className="hidden border-t border-white/15 bg-primary sm:block">
         <div className="sg-container flex items-center gap-7 py-2.5">
-          {navigation.map((item) => (
+          {nav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -137,7 +144,7 @@ export default function Navbar() {
           className="border-t border-sky-200 bg-white sm:hidden"
         >
           <div className="sg-container flex flex-col gap-1 py-3">
-            {navigation.map((item) => (
+            {nav.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -161,14 +168,15 @@ export default function Navbar() {
             >
               <CartIcon className="h-5 w-5 text-primary-dark" />
               <span>Shopping cart</span>
+              {count > 0 && <span className="rounded-full bg-red-600 px-2 text-xs text-white">{count}</span>}
             </Link>
-            <Link
+            {current ? <button type="button" onClick={() => { logout(); router.push("/"); }} className="rounded-lg px-3 py-2.5 text-left">{current.user.full_name} · Đăng xuất</button> : <Link
               href="/login"
               className="rounded-lg px-3 py-2.5 font-medium text-foreground hover:bg-primary-light"
               onClick={() => setMenuOpen(false)}
             >
-              Login
-            </Link>
+              Đăng nhập
+            </Link>}
           </div>
         </nav>
       )}

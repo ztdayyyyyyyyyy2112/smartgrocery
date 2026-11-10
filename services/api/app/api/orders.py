@@ -13,6 +13,7 @@ from app.db.session import get_db
 from app.events import enqueue_event
 from app.models import IdempotencyKey, InventoryBatch, Order, OrderItem, OrderStatus, Product, StockEventType, StockLedgerEntry, StockReservation, UserRole
 from app.security import current_user, require_roles
+from app.store_access import ensure_store_access, merchant_store_id
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -25,6 +26,9 @@ class OrderLineRequest(BaseModel):
 class CreateOrderRequest(BaseModel):
     store_id: UUID
     items: list[OrderLineRequest] = Field(min_length=1)
+    recipient_name: str | None = Field(default=None, min_length=1, max_length=200)
+    delivery_phone: str | None = Field(default=None, min_length=8, max_length=40)
+    delivery_address: str | None = Field(default=None, min_length=5, max_length=500)
 
 
 def _order_body(order: Order, items: list[OrderItem]) -> dict:
@@ -32,6 +36,9 @@ def _order_body(order: Order, items: list[OrderItem]) -> dict:
         "id": str(order.id),
         "store_id": str(order.store_id),
         "customer_id": str(order.customer_id),
+        "recipient_name": order.recipient_name,
+        "delivery_phone": order.delivery_phone,
+        "delivery_address": order.delivery_address,
         "status": order.status.value,
         "subtotal": str(order.subtotal),
         "total": str(order.total),
@@ -45,6 +52,8 @@ def list_orders(db: Session = Depends(get_db), user=Depends(current_user)) -> li
     stmt = select(Order).order_by(Order.created_at.desc()).limit(100)
     if user.role == UserRole.CUSTOMER:
         stmt = stmt.where(Order.customer_id == user.id)
+    elif user.role == UserRole.MERCHANT:
+        stmt = stmt.where(Order.store_id == merchant_store_id(db, user))
     orders = db.scalars(stmt).all()
     return [_order_body(order, list(db.scalars(select(OrderItem).where(OrderItem.order_id == order.id)).all()))
             for order in orders]
@@ -53,13 +62,17 @@ def list_orders(db: Session = Depends(get_db), user=Depends(current_user)) -> li
 @router.get("/{order_id}")
 def get_order(order_id: UUID, db: Session = Depends(get_db), user=Depends(current_user)) -> dict:
     order = db.get(Order, order_id)
-    if order is None or (user.role == UserRole.CUSTOMER and order.customer_id != user.id):
+    if order is None or (user.role == UserRole.CUSTOMER and order.customer_id != user.id) or (user.role == UserRole.MERCHANT and order.store_id != merchant_store_id(db, user)):
         raise HTTPException(status_code=404, detail="Order not found")
     return _order_body(order, list(db.scalars(select(OrderItem).where(OrderItem.order_id == order.id)).all()))
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_order(payload: CreateOrderRequest, idempotency_key: str = Header(..., alias="Idempotency-Key"), db: Session = Depends(get_db), user=Depends(current_user)) -> dict:
+    if user.role != UserRole.CUSTOMER:
+        raise HTTPException(status_code=403, detail="Customer account required")
+    if not (payload.delivery_phone or user.phone) or not (payload.delivery_address or user.default_address):
+        raise HTTPException(status_code=422, detail="Delivery phone and address required")
     request_hash = hashlib.sha256(json.dumps(payload.model_dump(mode="json"), sort_keys=True).encode()).hexdigest()
     existing = db.get(IdempotencyKey, idempotency_key)
     if existing:
@@ -101,7 +114,9 @@ def create_order(payload: CreateOrderRequest, idempotency_key: str = Header(...,
                 allocations.append((line, products[line.product_id], selected))
 
             subtotal = sum((line.quantity * product.selling_price for line, product, _ in allocations), Decimal("0"))
-            order = Order(store_id=payload.store_id, customer_id=user.id, status=OrderStatus.CONFIRMED, subtotal=subtotal, total=subtotal, idempotency_key=idempotency_key)
+            order = Order(store_id=payload.store_id, customer_id=user.id, recipient_name=payload.recipient_name or user.full_name,
+                          delivery_phone=payload.delivery_phone or user.phone, delivery_address=payload.delivery_address or user.default_address,
+                          status=OrderStatus.CONFIRMED, subtotal=subtotal, total=subtotal, idempotency_key=idempotency_key)
             db.add(order)
             db.flush()
             order_items = []
@@ -115,7 +130,7 @@ def create_order(payload: CreateOrderRequest, idempotency_key: str = Header(...,
                     db.add(StockReservation(order_item_id=item.id, batch_id=batch.id, quantity=amount))
                     db.add(StockLedgerEntry(store_id=payload.store_id, product_id=product.id, batch_id=batch.id, event_type=StockEventType.RESERVE, quantity_delta=amount, reference_type="order", reference_id=order.id, created_by=user.id))
             response = _order_body(order, order_items)
-            enqueue_event(db, event_type="order.confirmed", aggregate_type="order", aggregate_id=order.id, payload=response)
+            enqueue_event(db, event_type="order.confirmed", aggregate_type="order", aggregate_id=order.id, payload={"id": str(order.id), "store_id": str(order.store_id), "status": order.status.value})
             db.add(IdempotencyKey(key=idempotency_key, user_id=user.id, request_hash=request_hash, response_code=201, response_body=response, expires_at=datetime.now(timezone.utc) + timedelta(days=7)))
             return response
     except HTTPException:
@@ -135,6 +150,8 @@ def cancel_order(order_id: UUID, db: Session = Depends(get_db), user=Depends(cur
     db.rollback()
     with db.begin():
         order, items = _locked_order(order_id, db)
+        if user.role == UserRole.MERCHANT:
+            ensure_store_access(db, user, order.store_id)
         if order.customer_id != user.id and user.role.value not in {"merchant", "admin"}:
             raise HTTPException(status_code=404, detail="Order not found")
         if order.status not in {OrderStatus.PENDING, OrderStatus.CONFIRMED}:
@@ -148,7 +165,7 @@ def cancel_order(order_id: UUID, db: Session = Depends(get_db), user=Depends(cur
         order.status = OrderStatus.CANCELLED
         order.cancelled_reason = "cancelled by user"
         response = _order_body(order, items)
-        enqueue_event(db, event_type="order.cancelled", aggregate_type="order", aggregate_id=order.id, payload=response)
+        enqueue_event(db, event_type="order.cancelled", aggregate_type="order", aggregate_id=order.id, payload={"id": str(order.id), "store_id": str(order.store_id), "status": order.status.value})
         return response
 
 
@@ -157,6 +174,7 @@ def fulfil_order(order_id: UUID, db: Session = Depends(get_db), user=Depends(req
     db.rollback()
     with db.begin():
         order, items = _locked_order(order_id, db)
+        ensure_store_access(db, user, order.store_id)
         if order.status != OrderStatus.CONFIRMED:
             raise HTTPException(status_code=409, detail="Order cannot be fulfilled")
         for item in items:
@@ -170,5 +188,5 @@ def fulfil_order(order_id: UUID, db: Session = Depends(get_db), user=Depends(req
                 db.add(StockLedgerEntry(store_id=order.store_id, product_id=item.product_id, batch_id=batch.id, event_type=StockEventType.FULFIL, quantity_delta=-reservation.quantity, reference_type="order", reference_id=order.id, created_by=user.id))
         order.status = OrderStatus.FULFILLED
         response = _order_body(order, items)
-        enqueue_event(db, event_type="order.fulfilled", aggregate_type="order", aggregate_id=order.id, payload=response)
+        enqueue_event(db, event_type="order.fulfilled", aggregate_type="order", aggregate_id=order.id, payload={"id": str(order.id), "store_id": str(order.store_id), "status": order.status.value})
         return response
