@@ -1,0 +1,133 @@
+{
+  "features": [
+    "store_id",
+    "sku_id",
+    "category",
+    "log_unit_price",
+    "lag_0",
+    "lag_1",
+    "lag_2",
+    "lag_3",
+    "lag_6",
+    "lag_13",
+    "roll_mean_7",
+    "roll_mean_14",
+    "roll_mean_28",
+    "roll_std_7",
+    "roll_std_28",
+    "ewm_mean_7",
+    "zero_share_28",
+    "stockout_days_7",
+    "missing_days_7",
+    "history_days",
+    "promo_days_7",
+    "t_dow",
+    "t_dom",
+    "t_month",
+    "t_weekofyear",
+    "t_is_weekend",
+    "t_is_holiday",
+    "t_holiday_eve",
+    "t_tet_window",
+    "t_is_payday",
+    "t_discount_pct",
+    "t_is_promo",
+    "sw_lag_1",
+    "sw_lag_2",
+    "sw_lag_4",
+    "sw_mean"
+  ],
+  "categorical": [
+    "store_id",
+    "sku_id",
+    "category"
+  ],
+  "categories": {
+    "store_id": [
+      "S001",
+      "S002",
+      "S003"
+    ],
+    "sku_id": [
+      "SKU001",
+      "SKU002",
+      "SKU003",
+      "SKU004",
+      "SKU005",
+      "SKU006",
+      "SKU007",
+      "SKU008",
+      "SKU009",
+      "SKU010",
+      "SKU011",
+      "SKU012",
+      "SKU013",
+      "SKU014",
+      "SKU015",
+      "SKU016",
+      "SKU017",
+      "SKU018",
+      "SKU019",
+      "SKU020",
+      "SKU021",
+      "SKU022",
+      "SKU023",
+      "SKU024",
+      "SKU025",
+      "SKU026",
+      "SKU027",
+      "SKU028",
+      "SKU029",
+      "SKU030",
+      "SKU031",
+      "SKU032"
+    ],
+    "category": [
+      "bakery",
+      "beverages",
+      "condiments",
+      "dairy",
+      "eggs",
+      "fresh_produce",
+      "household",
+      "instant_food",
+      "meat_seafood",
+      "personal_care",
+      "rice_grains",
+      "snacks"
+    ]
+  },
+  "backend": "lightgbm",
+  "model_version": "lightgbm-direct-v1.0.0",
+  "horizon": 7,
+  "n_estimators": {
+    "1": 341,
+    "2": 200,
+    "3": 260,
+    "4": 211,
+    "5": 231,
+    "6": 255,
+    "7": 249
+  },
+  "train_end_date": "2026-11-09",
+  "trained_at": "2026-11-10T07:29:28+00:00",
+  "backtest_metrics": {
+    "Seasonal Naive": {
+      "WAPE": 56.00343533754707,
+      "RMSE": 13.836882972368,
+      "MAE": 8.442814288669746
+    },
+    "MA-28": {
+      "WAPE": 41.11180605632659,
+      "RMSE": 10.249302960271983,
+      "MAE": 6.1978223570271505
+    },
+    "LightGBM": {
+      "WAPE": 37.96247244334512,
+      "RMSE": 9.302624635554139,
+      "MAE": 5.723043646271145
+    }
+  },
+  "dataset": "SmartGrocery synthetic v1 (seed 42)",
+  "data_as_of": "2026-11-09"
+}
