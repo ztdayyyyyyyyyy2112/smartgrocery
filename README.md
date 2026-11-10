@@ -30,7 +30,7 @@ docker compose exec api python scripts/seed.py
 python scripts/demo_smoke.py
 ```
 
-Open http://localhost:3000. AI Swagger is at http://localhost:8001/docs and business API Swagger at http://localhost:8000/docs. First build trains the model from synthetic data and may take several minutes. Demo accounts: `customer@smartgrocery.local` and `merchant@smartgrocery.local`, password `DemoPass123!` (change with `SG_DEMO_PASSWORD` when seeding manually). Keep these credentials local; do not deploy the demo seed publicly.
+Open http://localhost:3000. AI Swagger is at http://localhost:8001/docs and business API Swagger at http://localhost:8000/docs. First build trains the model from synthetic data and may take several minutes. Demo accounts: `customer@smartgrocery.example.com` and `merchant@smartgrocery.example.com`, password `DemoPass123!` (change with `SG_DEMO_PASSWORD` when seeding manually). Keep these credentials local; do not deploy the demo seed publicly.
 
 Manual click path: customer login → add `SKU005` to cart → checkout at `S001` → merchant login → Inventory → Forecasting (run job; wait for succeeded) → Recommendations (approve and create PO) → Procurement (approve, send, receive) → Inventory (observe increase). Merchant may fulfil the customer order from Orders. `docs/demo-runbook.md` records expected results and troubleshooting.
 

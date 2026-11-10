@@ -5,7 +5,7 @@ import { api, saveSession, type Session } from "../../../lib/demo";
 export default function LoginPage() {
   const router = useRouter();
   const [register, setRegister] = useState(false);
-  const [email, setEmail] = useState("customer@smartgrocery.local");
+  const [email, setEmail] = useState("customer@smartgrocery.example.com");
   const [password, setPassword] = useState("DemoPass123!");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -20,7 +20,7 @@ export default function LoginPage() {
   }
   return <section className="sg-container py-16"><div className="mx-auto max-w-lg rounded-2xl border border-border bg-white p-8 shadow-sm">
     <h1 className="text-3xl font-bold">{register ? "Tạo tài khoản" : "Đăng nhập"}</h1>
-    <p className="mt-3 text-sm text-muted">Demo: customer@smartgrocery.local hoặc merchant@smartgrocery.local · mật khẩu DemoPass123!</p>
+    <p className="mt-3 text-sm text-muted">Demo: customer@smartgrocery.example.com hoặc merchant@smartgrocery.example.com · mật khẩu DemoPass123!</p>
     <form onSubmit={submit} className="mt-7 space-y-4">
       {register && <label className="block">Họ tên<input required value={name} onChange={e => setName(e.target.value)} className="mt-1 w-full rounded-xl border border-border p-3" /></label>}
       <label className="block">Email<input type="email" required value={email} onChange={e => setEmail(e.target.value)} className="mt-1 w-full rounded-xl border border-border p-3" /></label>

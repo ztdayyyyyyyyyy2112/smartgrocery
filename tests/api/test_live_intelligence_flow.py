@@ -18,8 +18,8 @@ def test_ai_job_to_purchase_order_receiving(monkeypatch):
         store = db.scalar(select(Store).where(Store.code == "S001"))
         product = db.scalar(select(Product).where(Product.sku == "SKU005"))
         supplier = db.scalar(select(Supplier).where(Supplier.name == "SmartGrocery Demo Supplier"))
-        merchant = db.scalar(select(User).where(User.email == "merchant@smartgrocery.local"))
-        customer = db.scalar(select(User).where(User.email == "customer@smartgrocery.local"))
+        merchant = db.scalar(select(User).where(User.email == "merchant@smartgrocery.example.com"))
+        customer = db.scalar(select(User).where(User.email == "customer@smartgrocery.example.com"))
         assert all([store, product, supplier, merchant, customer])
         store_id, product_id, supplier_id = store.id, product.id, supplier.id
         merchant_token = create_token(merchant, token_type="access", expires_delta=timedelta(minutes=15))

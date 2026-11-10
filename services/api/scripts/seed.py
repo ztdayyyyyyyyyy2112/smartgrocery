@@ -92,8 +92,8 @@ def seed_intelligence_catalog(db) -> None:
                                    min_order_qty=Decimal(products[sku]["moq"])))
             linked_products.add(product_id)
     password = os.getenv("SG_DEMO_PASSWORD", "DemoPass123!")
-    for email, role in (("merchant@smartgrocery.local", UserRole.MERCHANT),
-                        ("customer@smartgrocery.local", UserRole.CUSTOMER)):
+    for email, role in (("merchant@smartgrocery.example.com", UserRole.MERCHANT),
+                        ("customer@smartgrocery.example.com", UserRole.CUSTOMER)):
         if db.scalar(select(User).where(User.email == email)) is None:
             db.add(User(id=_demo_id("user", email), email=email, full_name=f"Demo {role.value.title()}",
                         password_hash=hash_password(password), role=role))

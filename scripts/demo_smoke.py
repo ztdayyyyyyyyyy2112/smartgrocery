@@ -25,8 +25,8 @@ def call(path, method="GET", body=None, token=None, idempotency=None):
 
 def main():
     password = "DemoPass123!"
-    customer = call("/auth/login", "POST", {"email": "customer@smartgrocery.local", "password": password})["access_token"]
-    merchant = call("/auth/login", "POST", {"email": "merchant@smartgrocery.local", "password": password})["access_token"]
+    customer = call("/auth/login", "POST", {"email": "customer@smartgrocery.example.com", "password": password})["access_token"]
+    merchant = call("/auth/login", "POST", {"email": "merchant@smartgrocery.example.com", "password": password})["access_token"]
     store = next(item for item in call("/stores") if item["code"] == "S001")
     product = next(item for item in call("/products?page_size=100")["items"] if item["sku"] == "SKU005")
     stock_before = next(item for item in call(f"/inventory?store_id={store['id']}", token=merchant) if item["sku"] == "SKU005")
