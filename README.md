@@ -13,7 +13,7 @@ Track the acceptance checklist in [release readiness #46](https://github.com/ztd
 - `apps/web` — Next.js storefront and merchant dashboard shell.
 - `services/api` — FastAPI, Alembic migrations, Celery worker and seed script.
 - `services/intelligence` — synthetic data, forecasting, replenishment optimization and standalone inference API.
-- `tests/api` — backend tests; `tests/test_*.py` — intelligence tests.
+- `tests/api` — backend tests; `tests/intelligence` — intelligence tests.
 - `docs/architecture` and `docs/api` — design and API contracts.
 - `docs/release-evidence.md` — results recorded by the backend team.
 - `docs/api/intelligence-integration-status.md` — current AI/backend contract gap and integration steps.
@@ -84,7 +84,7 @@ npm run build
 
 The CI workflow runs the web and backend checks for pull requests. See [backend release evidence](docs/release-evidence.md) for recorded backend results. A clean-run result for the entire product is still required.
 
-After running the intelligence pipeline, check its tests with `& .\services\intelligence\.venv\Scripts\python.exe -m pytest tests --ignore=tests/api -q` from the repository root. The intelligence suite passed 46 tests locally on 10 November 2026. CI regenerates the synthetic data and model before running this suite.
+After running the intelligence pipeline, check its tests with `& .\services\intelligence\.venv\Scripts\python.exe -m pytest tests/intelligence -q` from the repository root. The intelligence suite passed 46 tests locally on 10 November 2026. CI regenerates the synthetic data and model before running this suite.
 
 ## Collaboration
 

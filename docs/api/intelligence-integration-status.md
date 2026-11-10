@@ -1,6 +1,6 @@
 # Intelligence integration status — 10/11/2026
 
-Code Bảo Khoa đã được nhập vào `services/intelligence`, kèm tài liệu, bài test và bằng chứng tái tạo. Dịch vụ AI hoạt động độc lập; frontend vẫn chỉ gọi backend chính. **Chưa nối kết quả AI vào các bảng forecast/recommendation của backend.**
+Code Bảo Khoa đã được nhập vào `services/intelligence`, kèm tài liệu, bài test tại `tests/intelligence` và bằng chứng tái tạo. Dịch vụ AI hoạt động độc lập; frontend vẫn chỉ gọi backend chính. **Chưa nối kết quả AI vào các bảng forecast/recommendation của backend.**
 
 ## Lý do chưa thể nối trực tiếp
 

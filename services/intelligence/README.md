@@ -54,8 +54,8 @@ Kết quả:
 ## 3. Kiểm thử
 
 ```powershell
-cd ../..            # gốc repo
-pytest tests -q     # cần chạy pipeline trước (test dùng artifact)
+cd ../..                       # gốc repo
+pytest tests/intelligence -q   # cần chạy pipeline trước (test dùng artifact)
 ```
 
 ## 4. Chạy AI service

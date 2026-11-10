@@ -1,11 +1,11 @@
-"""Cấu hình pytest cho phần AI. Chạy từ gốc repo:  pytest tests -q"""
+"""Cấu hình pytest cho phần AI. Chạy từ gốc repo: pytest tests/intelligence -q"""
 import sys
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
-SERVICE = Path(__file__).resolve().parents[1] / "services" / "intelligence"
+SERVICE = Path(__file__).resolve().parents[2] / "services" / "intelligence"
 sys.path.insert(0, str(SERVICE))
 
 from src.utils import config  # noqa: E402
