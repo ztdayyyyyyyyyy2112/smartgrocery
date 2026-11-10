@@ -70,6 +70,8 @@ def seed_intelligence_catalog(db) -> None:
         db.add(supplier)
     db.flush()
     today = date.today()
+    linked_products = set(db.scalars(select(SupplierProduct.product_id).where(
+        SupplierProduct.supplier_id == supplier.id)).all())
     for row in _rows("store_assortment.csv"):
         store_code, sku = row["store_id"], row["sku_id"]
         if store_code not in stores or sku not in products:
@@ -84,11 +86,11 @@ def seed_intelligence_catalog(db) -> None:
             db.add(InventoryBatch(store_id=store_id, product_id=product_id, lot_code=lot,
                                   quantity_on_hand=quantity, expiry_date=today + timedelta(days=max(shelf_life, 2)),
                                   unit_cost=Decimal(products[sku]["purchase_cost"])))
-        link = db.get(SupplierProduct, (supplier.id, product_id))
-        if link is None:
+        if product_id not in linked_products:
             db.add(SupplierProduct(supplier_id=supplier.id, product_id=product_id, supplier_sku=sku,
                                    unit_cost=Decimal(products[sku]["purchase_cost"]),
                                    min_order_qty=Decimal(products[sku]["moq"])))
+            linked_products.add(product_id)
     password = os.getenv("SG_DEMO_PASSWORD", "DemoPass123!")
     for email, role in (("merchant@smartgrocery.local", UserRole.MERCHANT),
                         ("customer@smartgrocery.local", UserRole.CUSTOMER)):
