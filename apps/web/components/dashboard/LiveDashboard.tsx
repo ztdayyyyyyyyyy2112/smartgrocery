@@ -57,7 +57,7 @@ export default function LiveDashboard({ view }: { view: View }) {
     function connect() {
       const url = wsUrl(); if (!url || stopped) return;
       socket = new WebSocket(url);
-      socket.onopen = () => setLive(true);
+      socket.onopen = () => { setLive(true); void load(); };
       socket.onmessage = () => { void load(); };
       socket.onclose = () => { setLive(false); if (!stopped) timer = setTimeout(connect, 3000); };
       socket.onerror = () => socket?.close();
