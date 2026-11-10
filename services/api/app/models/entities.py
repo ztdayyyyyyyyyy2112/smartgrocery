@@ -81,6 +81,9 @@ class User(TimestampMixin, Base):
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(Text, nullable=False)
     full_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    phone: Mapped[str | None] = mapped_column(String(40))
+    default_address: Mapped[str | None] = mapped_column(Text)
+    privacy_consent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_role", values_callable=lambda items: [item.value for item in items]), default=UserRole.CUSTOMER, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"), nullable=False)
 
@@ -102,6 +105,7 @@ class Store(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
+    merchant_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id"), unique=True)
     address: Mapped[str | None] = mapped_column(Text)
     timezone: Mapped[str] = mapped_column(String(64), server_default=text("'Asia/Ho_Chi_Minh'"), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"), nullable=False)
@@ -174,6 +178,9 @@ class Order(TimestampMixin, Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     store_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("stores.id"), nullable=False)
     customer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    recipient_name: Mapped[str | None] = mapped_column(String(200))
+    delivery_phone: Mapped[str | None] = mapped_column(String(40))
+    delivery_address: Mapped[str | None] = mapped_column(Text)
     status: Mapped[OrderStatus] = mapped_column(Enum(OrderStatus, name="order_status", values_callable=lambda items: [item.value for item in items]), default=OrderStatus.PENDING, nullable=False)
     subtotal: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     total: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
@@ -241,6 +248,7 @@ class Supplier(Base):
     __tablename__ = "suppliers"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    store_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("stores.id"))
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     contact_email: Mapped[str | None] = mapped_column(String(320))
     contact_phone: Mapped[str | None] = mapped_column(String(40))

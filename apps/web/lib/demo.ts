@@ -1,11 +1,11 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-export type User = { id: string; email: string; full_name: string; role: "customer" | "merchant" | "admin" };
-export type Session = { access_token: string; refresh_token: string; user: User };
+export type User = { id: string; email: string; full_name: string; role: "customer" | "merchant" | "admin"; store_id: string | null; phone: string | null; default_address: string | null };
+export type Session = { user: User; access_token?: string; refresh_token?: string };
 export type Product = { id: string; sku: string; name: string; unit: string; selling_price: string; available_qty: string; image_url: string | null; description: string | null };
 export type Store = { id: string; code: string; name: string };
 export type CartItem = { product: Product; quantity: number };
-export type Order = { id: string; store_id: string; status: string; total: string; items: { product_id: string; quantity: string; unit_price: string }[] };
+export type Order = { id: string; store_id: string; status: string; total: string; recipient_name: string; delivery_phone: string; delivery_address: string; items: { product_id: string; quantity: string; unit_price: string }[] };
 export type Inventory = { store_id: string; product_id: string; sku: string; name: string; on_hand: string; reserved: string; available: string; alerts: string[] };
 export type Recommendation = { id: string; store_id: string; product_id: string; suggested_qty: string; safety_stock: string; reorder_point: string; reason: string; status: string };
 export type Forecast = { id: string; store_id: string; product_id: string; target_date: string; predicted_qty: string; model_name: string; model_version: string };
@@ -14,13 +14,16 @@ export type PurchaseOrder = { id: string; store_id: string; supplier_id: string;
 
 const SESSION_KEY = "smartgrocery.demo.session";
 const CART_KEY = "smartgrocery.demo.cart";
+const STORE_KEY = "smartgrocery.demo.store";
 
 export function session(): Session | null {
   if (typeof window === "undefined") return null;
   try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch { return null; }
 }
-export function saveSession(value: Session) { localStorage.setItem(SESSION_KEY, JSON.stringify(value)); }
-export function logout() { localStorage.removeItem(SESSION_KEY); }
+export function saveSession(value: Session) { localStorage.setItem(SESSION_KEY, JSON.stringify({ user: { ...value.user, phone: null, default_address: null } })); window.dispatchEvent(new Event("smartgrocery:session")); }
+export function logout() { void fetch(`${API_URL}/api/v1/auth/logout`, { method: "POST", credentials: "include" }); localStorage.removeItem(SESSION_KEY); window.dispatchEvent(new Event("smartgrocery:session")); }
+export function selectedStore() { return typeof window === "undefined" ? "" : localStorage.getItem(STORE_KEY) || ""; }
+export function saveSelectedStore(id: string) { localStorage.setItem(STORE_KEY, id); saveCart([]); window.dispatchEvent(new Event("smartgrocery:store")); }
 export function cart(): CartItem[] {
   if (typeof window === "undefined") return [];
   try { return JSON.parse(localStorage.getItem(CART_KEY) || "[]"); } catch { return []; }
@@ -33,18 +36,19 @@ export function addToCart(product: Product) {
   else items.push({ product, quantity: 1 });
   saveCart(items);
 }
+export function removeFromCart(id: string) { saveCart(cart().filter(item => item.product.id !== id)); }
 export function money(value: string | number) { return `${Number(value).toLocaleString("vi-VN")}₫`; }
 
 export async function api<T>(path: string, options: RequestInit = {}, retry = true): Promise<T> {
   const current = session();
   const headers = new Headers(options.headers);
   if (options.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-  if (current?.access_token) headers.set("Authorization", `Bearer ${current.access_token}`);
+  if (["/api/v1/auth/login", "/api/v1/auth/register"].includes(path)) headers.set("X-SG-Browser-Session", "1");
   let response: Response;
-  try { response = await fetch(`${API_URL}${path}`, { ...options, headers, cache: "no-store" }); }
+  try { response = await fetch(`${API_URL}${path}`, { ...options, headers, credentials: "include", cache: "no-store" }); }
   catch { throw new Error("Không kết nối được API. Kiểm tra dịch vụ ở cổng 8000."); }
-  if (response.status === 401 && retry && current?.refresh_token && path !== "/api/v1/auth/refresh") {
-    const refreshed = await fetch(`${API_URL}/api/v1/auth/refresh`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ refresh_token: current.refresh_token }) });
+  if (response.status === 401 && retry && current && !path.startsWith("/api/v1/auth/")) {
+    const refreshed = await fetch(`${API_URL}/api/v1/auth/refresh`, { method: "POST", headers: { "X-SG-Browser-Session": "1" }, credentials: "include" });
     if (refreshed.ok) { saveSession(await refreshed.json()); return api<T>(path, options, false); }
     logout();
   }
@@ -54,6 +58,5 @@ export async function api<T>(path: string, options: RequestInit = {}, retry = tr
 }
 
 export function wsUrl() {
-  const token = session()?.access_token;
-  return token ? `${API_URL.replace(/^http/, "ws")}/ws/events?access_token=${encodeURIComponent(token)}` : null;
+  return session() ? `${API_URL.replace(/^http/, "ws")}/ws/events` : null;
 }

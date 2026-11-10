@@ -14,7 +14,7 @@ client = TestClient(app)
 
 def test_forecast_job_requires_merchant_role() -> None:
     email = f"forecast-customer-{uuid4()}@example.com"
-    register = client.post("/api/v1/auth/register", json={"email": email, "password": "password123", "full_name": "Forecast Customer"})
+    register = client.post("/api/v1/auth/register", json={"email": email, "password": "password123", "full_name": "Forecast Customer", "phone": "0900000000", "default_address": "1 Demo Street", "privacy_consent": True})
     assert register.status_code == 201
     token = client.post("/api/v1/auth/login", json={"email": email, "password": "password123"}).json()["access_token"]
     store_id = str(_store_id())
@@ -24,10 +24,7 @@ def test_forecast_job_requires_merchant_role() -> None:
 
 def test_merchant_can_queue_and_poll_forecast_job() -> None:
     with SessionLocal() as db:
-        merchant = User(email=f"forecast-merchant-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="Forecast Merchant", role=UserRole.MERCHANT)
-        db.add(merchant)
-        db.commit()
-        db.refresh(merchant)
+        merchant = db.scalar(select(User).where(User.email == "merchant@smartgrocery.example.com"))
         token = create_token(merchant, token_type="access", expires_delta=__import__("datetime").timedelta(minutes=15))
     response = client.post("/api/v1/jobs/forecasts", headers={"Authorization": f"Bearer {token}"}, json={"store_id": str(_store_id()), "horizon_days": 7})
     assert response.status_code == 202
@@ -40,10 +37,7 @@ def test_merchant_can_queue_and_poll_forecast_job() -> None:
 
 def test_forecast_job_result_success_and_failure() -> None:
     with SessionLocal() as db:
-        merchant = User(email=f"forecast-result-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="Forecast Result", role=UserRole.MERCHANT)
-        db.add(merchant)
-        db.commit()
-        db.refresh(merchant)
+        merchant = db.scalar(select(User).where(User.email == "merchant@smartgrocery.example.com"))
         token = create_token(merchant, token_type="access", expires_delta=__import__("datetime").timedelta(minutes=15))
     headers = {"Authorization": f"Bearer {token}"}
     store_id = str(_store_id())
@@ -60,10 +54,7 @@ def test_forecast_job_result_success_and_failure() -> None:
 
 def test_forecast_result_validation_and_terminal_state() -> None:
     with SessionLocal() as db:
-        merchant = User(email=f"forecast-validation-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="Forecast Validation", role=UserRole.MERCHANT)
-        db.add(merchant)
-        db.commit()
-        db.refresh(merchant)
+        merchant = db.scalar(select(User).where(User.email == "merchant@smartgrocery.example.com"))
         token = create_token(merchant, token_type="access", expires_delta=__import__("datetime").timedelta(minutes=15))
     headers = {"Authorization": f"Bearer {token}"}
     job_id = client.post("/api/v1/jobs/forecasts", headers=headers, json={"store_id": str(_store_id())}).json()["job_id"]
@@ -77,12 +68,11 @@ def test_forecast_result_validation_and_terminal_state() -> None:
 
 def test_recommendation_can_convert_to_purchase_order() -> None:
     with SessionLocal() as db:
-        merchant = User(email=f"forecast-convert-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="Forecast Convert", role=UserRole.MERCHANT)
-        db.add(merchant)
+        merchant = db.scalar(select(User).where(User.email == "merchant@smartgrocery.example.com"))
         db.flush()
         store_id = _store_id()
         product_id = _product_id()
-        supplier = Supplier(name=f"Forecast Supplier {uuid4().hex[:6]}")
+        supplier = Supplier(name=f"Forecast Supplier {uuid4().hex[:6]}", store_id=store_id)
         db.add(supplier)
         db.flush()
         db.add(SupplierProduct(supplier_id=supplier.id, product_id=product_id, unit_cost=12000))
@@ -104,7 +94,7 @@ def test_recommendation_can_convert_to_purchase_order() -> None:
 
 def _store_id():
     with SessionLocal() as db:
-        store = db.scalar(select(Store).limit(1))
+        store = db.scalar(select(Store).where(Store.code == "S001"))
         assert store is not None
         return store.id
 

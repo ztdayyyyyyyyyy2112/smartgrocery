@@ -59,15 +59,21 @@ def seed_intelligence_catalog(db) -> None:
             category = Category(id=_demo_id("category", slug), slug=slug, name=slug.replace("_", " ").title())
             db.add(category)
             categories_by_slug[slug] = category
-        if db.scalar(select(Product).where(Product.sku == sku)) is None:
+        photo = f"/products/{sku}.jpg"
+        existing_product = db.scalar(select(Product).where(Product.sku == sku))
+        if existing_product is None:
             db.add(Product(id=_demo_id("product", sku), sku=sku, name=row["product_name"], unit="item",
                            selling_price=Decimal(row["unit_price"]), category_id=category.id,
                            is_perishable=int(row["shelf_life_days"]) <= 30,
-                           default_shelf_life_days=int(row["shelf_life_days"])))
+                           default_shelf_life_days=int(row["shelf_life_days"]), image_url=photo))
+        elif photo:
+            existing_product.image_url = photo
     supplier = db.get(Supplier, _demo_id("supplier", "AI-DEMO"))
     if supplier is None:
-        supplier = Supplier(id=_demo_id("supplier", "AI-DEMO"), name="SmartGrocery Demo Supplier", lead_time_days=2)
+        supplier = Supplier(id=_demo_id("supplier", "AI-DEMO"), name="SmartGrocery Demo Supplier", lead_time_days=2, store_id=_demo_id("store", "S001"))
         db.add(supplier)
+    else:
+        supplier.store_id = _demo_id("store", "S001")
     db.flush()
     today = date.today()
     linked_products = set(db.scalars(select(SupplierProduct.product_id).where(
@@ -94,9 +100,19 @@ def seed_intelligence_catalog(db) -> None:
     password = os.getenv("SG_DEMO_PASSWORD", "DemoPass123!")
     for email, role in (("merchant@smartgrocery.example.com", UserRole.MERCHANT),
                         ("customer@smartgrocery.example.com", UserRole.CUSTOMER)):
-        if db.scalar(select(User).where(User.email == email)) is None:
+        existing = db.scalar(select(User).where(User.email == email))
+        if existing is None:
             db.add(User(id=_demo_id("user", email), email=email, full_name=f"Demo {role.value.title()}",
-                        password_hash=hash_password(password), role=role))
+                        password_hash=hash_password(password), role=role,
+                        phone="0900000000" if role == UserRole.CUSTOMER else None,
+                        default_address="1 Demo Street, Ho Chi Minh City" if role == UserRole.CUSTOMER else None))
+        elif role == UserRole.CUSTOMER:
+            existing.phone = existing.phone or "0900000000"
+            existing.default_address = existing.default_address or "1 Demo Street, Ho Chi Minh City"
+    db.flush()
+    demo_store = db.scalar(select(Store).where(Store.code == "S001"))
+    if demo_store is not None and demo_store.merchant_id is None:
+        demo_store.merchant_id = db.scalar(select(User.id).where(User.email == "merchant@smartgrocery.example.com"))
 
 
 def seed() -> None:

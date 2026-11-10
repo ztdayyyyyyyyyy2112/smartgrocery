@@ -27,7 +27,7 @@ def test_catalog_pagination_and_detail() -> None:
 
 def test_register_login_and_invalid_auth() -> None:
     email = f"catalog-auth-{uuid4().hex}@example.com"
-    register = client.post("/api/v1/auth/register", json={"email": email, "password": "password123", "full_name": "Auth Test"})
+    register = client.post("/api/v1/auth/register", json={"email": email, "password": "password123", "full_name": "Auth Test", "phone": "0900000000", "default_address": "1 Demo Street", "privacy_consent": True})
     assert register.status_code in {201, 409}
     login = client.post("/api/v1/auth/login", json={"email": email, "password": "password123"})
     assert login.status_code == 200
@@ -44,7 +44,7 @@ def test_register_login_and_invalid_auth() -> None:
 
 def test_inactive_user_cannot_login() -> None:
     email = f"inactive-auth-{uuid4().hex}@example.com"
-    register = client.post("/api/v1/auth/register", json={"email": email, "password": "password123", "full_name": "Inactive Test"})
+    register = client.post("/api/v1/auth/register", json={"email": email, "password": "password123", "full_name": "Inactive Test", "phone": "0900000000", "default_address": "1 Demo Street", "privacy_consent": True})
     assert register.status_code in {201, 409}
     with SessionLocal() as db:
         user = db.scalar(select(User).where(User.email == email))

@@ -11,6 +11,7 @@ from app.db.session import get_db
 from app.models import InventoryBatch, Product, Store, UserRole
 from app.rules.inventory import inventory_alerts
 from app.security import require_roles
+from app.store_access import merchant_store_id
 
 router = APIRouter(prefix="/inventory", tags=["inventory"])
 
@@ -37,6 +38,9 @@ def inventory(
     _user=Depends(require_roles(UserRole.MERCHANT, UserRole.ADMIN)),
 ) -> list[InventoryResponse]:
     stmt = select(InventoryBatch, Product).join(Product, Product.id == InventoryBatch.product_id).join(Store, Store.id == InventoryBatch.store_id)
+    owned = merchant_store_id(db, _user)
+    if owned is not None:
+        stmt = stmt.where(InventoryBatch.store_id == owned)
     if store_id:
         stmt = stmt.where(InventoryBatch.store_id == store_id)
     if product_id:

@@ -31,7 +31,9 @@ python scripts/demo_smoke.py
 
 Open http://localhost:3000. AI Swagger is at http://localhost:8001/docs and business API Swagger at http://localhost:8000/docs. First build trains the model from synthetic data and may take several minutes. Demo accounts: `customer@smartgrocery.example.com` and `merchant@smartgrocery.example.com`, password `DemoPass123!` (change with `SG_DEMO_PASSWORD` when seeding manually). Keep these credentials local; do not deploy the demo seed publicly.
 
-Manual click path: customer login → add `SKU005` to cart → checkout at `S001` → merchant login → Inventory → Forecasting (run job; wait for succeeded) → Recommendations (approve and create PO) → Procurement (approve, send, receive) → Inventory (observe increase). Merchant may fulfil the customer order from Orders. `docs/demo-runbook.md` records expected results and troubleshooting.
+Manual click path: choose store `S001` → customer login → add `SKU005` to cart → enter recipient, phone and delivery address → checkout → merchant login → Orders and Inventory → Forecasting (run job; wait for succeeded) → Recommendations (approve and create PO) → Procurement (approve, send, receive) → Inventory (observe increase). Merchant may fulfil the customer order from Orders. The seeded merchant belongs to `S001`; product availability and merchant data are scoped by store. Product photo sources and licenses are recorded in `docs/product-photo-credits.md`. `docs/demo-runbook.md` records expected results and troubleshooting.
+
+Browser authentication uses `HttpOnly` cookies. Registration requires explicit consent to share contact and delivery details with the store fulfilling an order; those details and password hashes are stored in PostgreSQL and returned only through authenticated endpoints. This remains a local academic demo: configure HTTPS, production secrets, data retention, backups, and an actual privacy notice before any public deployment.
 
 Stop with `docker compose down`; add `-v` only when intentionally deleting the demo database.
 

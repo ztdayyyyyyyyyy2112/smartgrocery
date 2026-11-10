@@ -15,7 +15,7 @@ client = TestClient(app)
 
 def test_expired_batch_is_not_available_in_catalog() -> None:
     with SessionLocal() as db:
-        store = db.scalar(select(Store).limit(1))
+        store = db.scalar(select(Store).where(Store.code == "S001"))
         product = Product(sku=f"EXPIRED-{uuid4().hex[:8]}", name="Expired Edge SKU", unit="unit", selling_price=Decimal("1000"), is_perishable=True)
         db.add(product)
         db.flush()
@@ -40,14 +40,11 @@ def test_sparse_sku_without_inventory_returns_zero_available() -> None:
 
 def test_zero_demand_forecast_is_stored_without_fake_recommendation() -> None:
     with SessionLocal() as db:
-        store = db.scalar(select(Store).limit(1))
+        store = db.scalar(select(Store).where(Store.code == "S001"))
         product = db.scalar(select(Product).limit(1))
         assert store is not None and product is not None
         store_id, product_id = store.id, product.id
-        user = User(email=f"edge-forecast-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="Edge Merchant", role=UserRole.MERCHANT)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        user = db.scalar(select(User).where(User.email == "merchant@smartgrocery.example.com"))
         token = create_token(user, token_type="access", expires_delta=timedelta(minutes=15))
     headers = {"Authorization": f"Bearer {token}"}
     job_id = client.post("/api/v1/jobs/forecasts", headers=headers, json={"store_id": str(store_id)}).json()["job_id"]
