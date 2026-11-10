@@ -1,0 +1,10 @@
+**/.venv/
+**/node_modules/
+**/.next/
+**/__pycache__/
+**/.pytest_cache/
+.git/
+.env
+services/intelligence/artifacts/
+services/intelligence/data/raw/
+services/intelligence/data/processed/

@@ -1,0 +1,26 @@
+{
+  "cleaning": {
+    "raw_rows": 248696,
+    "invalid_date_rows": 30,
+    "missing_sku_rows": 30,
+    "missing_store_rows": 0,
+    "invalid_quantity_rows": 0,
+    "unknown_sku_or_store_rows": 0,
+    "duplicate_transaction_rows": 744,
+    "return_rows": 987,
+    "return_units": 1424.0,
+    "bulk_b2b_rows": 3,
+    "bulk_b2b_units": 720.0,
+    "clean_rows": 246902
+  },
+  "panel": {
+    "panel_rows": 65940,
+    "series": 95,
+    "date_min": "2024-11-01",
+    "date_max": "2026-11-09",
+    "missing_days": 533,
+    "zero_sales_days": 3853,
+    "stockout_days": 3599,
+    "promo_days": 4944
+  }
+}

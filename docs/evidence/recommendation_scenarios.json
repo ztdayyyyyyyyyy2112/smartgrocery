@@ -1,0 +1,947 @@
+[
+  {
+    "scenario": "1. Sữa tươi sắp hết (CRITICAL)",
+    "request": {
+      "store_id": "S001",
+      "sku_id": "SKU005",
+      "inventory": {
+        "on_hand": 22,
+        "on_order": 0,
+        "reserved": 4
+      },
+      "service_level": 0.95
+    },
+    "response": {
+      "store_id": "S001",
+      "sku_id": "SKU005",
+      "product_name": "Sữa tươi tiệt trùng 1L",
+      "model_version": "lightgbm-direct-v1.0.0",
+      "forecast_method": "model",
+      "generated_at": "2026-11-10T07:29:29+00:00",
+      "as_of_date": "2026-11-09",
+      "lead_time_days": 2,
+      "service_level": 0.95,
+      "sigma_daily": 13.818,
+      "inventory_position": 18.0,
+      "confidence": "MEDIUM",
+      "lead_time_demand": 53.474,
+      "safety_stock": 32.144,
+      "reorder_point": 85.618,
+      "rop_order_qty": 72,
+      "suggested_order_qty": 96,
+      "days_of_cover": 0.6,
+      "requires_approval": true,
+      "forecast": [
+        {
+          "date": "2026-11-10",
+          "horizon": 1,
+          "predicted_demand": 27.139,
+          "baseline_seasonal_naive": 27.0
+        },
+        {
+          "date": "2026-11-11",
+          "horizon": 2,
+          "predicted_demand": 26.335,
+          "baseline_seasonal_naive": 34.0
+        },
+        {
+          "date": "2026-11-12",
+          "horizon": 3,
+          "predicted_demand": 27.941,
+          "baseline_seasonal_naive": 38.0
+        },
+        {
+          "date": "2026-11-13",
+          "horizon": 4,
+          "predicted_demand": 30.061,
+          "baseline_seasonal_naive": 16.0
+        },
+        {
+          "date": "2026-11-14",
+          "horizon": 5,
+          "predicted_demand": 35.155,
+          "baseline_seasonal_naive": 44.0
+        },
+        {
+          "date": "2026-11-15",
+          "horizon": 6,
+          "predicted_demand": 34.09,
+          "baseline_seasonal_naive": 53.0
+        },
+        {
+          "date": "2026-11-16",
+          "horizon": 7,
+          "predicted_demand": 27.057,
+          "baseline_seasonal_naive": 12.0
+        }
+      ],
+      "forecast_total": 207.778,
+      "alert_level": "CRITICAL",
+      "status": "REORDER_RECOMMENDED",
+      "meu": {
+        "enabled": true,
+        "cost_source": "product_master_demo_assumption",
+        "recommended_qty": 96,
+        "expected_utility": 1083472.58,
+        "expected_utility_no_order": 396389.0,
+        "expected_utility_reference_qty": 1029062.35,
+        "protection_period_days": 3,
+        "scenarios": [
+          {
+            "label": "very_low",
+            "probability": 0.2,
+            "demand": 50.74
+          },
+          {
+            "label": "low",
+            "probability": 0.2,
+            "demand": 68.86
+          },
+          {
+            "label": "base",
+            "probability": 0.2,
+            "demand": 81.41
+          },
+          {
+            "label": "high",
+            "probability": 0.2,
+            "demand": 93.97
+          },
+          {
+            "label": "very_high",
+            "probability": 0.2,
+            "demand": 112.09
+          }
+        ],
+        "top_candidates": [
+          {
+            "order_qty": 96,
+            "expected_utility": 1083472.58
+          },
+          {
+            "order_qty": 108,
+            "expected_utility": 1081947.98
+          },
+          {
+            "order_qty": 120,
+            "expected_utility": 1080423.38
+          },
+          {
+            "order_qty": 132,
+            "expected_utility": 1078898.78
+          },
+          {
+            "order_qty": 144,
+            "expected_utility": 1077374.18
+          }
+        ],
+        "n_candidates": 18
+      },
+      "warnings": [],
+      "explanation": "Tồn khả dụng 18 <= điểm đặt hàng 85.6 (nhu cầu lead time 2 ngày = 53.5, safety stock 32.1 @ service level 95%). Lượng theo ROP: 72 (pack 12, MOQ 24). MEU chọn 96 đơn vị (utility kỳ vọng 1,083,473 so với 1,029,062 nếu đặt theo ROP). CẢNH BÁO: tồn hiện tại không đủ bán đến khi hàng về."
+    }
+  },
+  {
+    "scenario": "2. Nước suối tồn nhiều (không cần nhập)",
+    "request": {
+      "store_id": "S002",
+      "sku_id": "SKU016",
+      "inventory": {
+        "on_hand": 320,
+        "on_order": 48,
+        "reserved": 10
+      }
+    },
+    "response": {
+      "store_id": "S002",
+      "sku_id": "SKU016",
+      "product_name": "Nước suối 500ml",
+      "model_version": "lightgbm-direct-v1.0.0",
+      "forecast_method": "model",
+      "generated_at": "2026-11-10T07:29:29+00:00",
+      "as_of_date": "2026-11-09",
+      "lead_time_days": 2,
+      "service_level": 0.95,
+      "sigma_daily": 21.46,
+      "inventory_position": 358.0,
+      "confidence": "MEDIUM",
+      "lead_time_demand": 69.813,
+      "safety_stock": 49.92,
+      "reorder_point": 119.733,
+      "rop_order_qty": 0,
+      "suggested_order_qty": 0,
+      "days_of_cover": 9.0,
+      "requires_approval": true,
+      "forecast": [
+        {
+          "date": "2026-11-10",
+          "horizon": 1,
+          "predicted_demand": 33.921,
+          "baseline_seasonal_naive": 38.0
+        },
+        {
+          "date": "2026-11-11",
+          "horizon": 2,
+          "predicted_demand": 35.892,
+          "baseline_seasonal_naive": 44.0
+        },
+        {
+          "date": "2026-11-12",
+          "horizon": 3,
+          "predicted_demand": 38.153,
+          "baseline_seasonal_naive": 59.0
+        },
+        {
+          "date": "2026-11-13",
+          "horizon": 4,
+          "predicted_demand": 41.54,
+          "baseline_seasonal_naive": 18.0
+        },
+        {
+          "date": "2026-11-14",
+          "horizon": 5,
+          "predicted_demand": 46.36,
+          "baseline_seasonal_naive": 68.0
+        },
+        {
+          "date": "2026-11-15",
+          "horizon": 6,
+          "predicted_demand": 45.889,
+          "baseline_seasonal_naive": 38.0
+        },
+        {
+          "date": "2026-11-16",
+          "horizon": 7,
+          "predicted_demand": 35.341,
+          "baseline_seasonal_naive": 38.0
+        }
+      ],
+      "forecast_total": 277.096,
+      "alert_level": "OK",
+      "status": "NO_REORDER_NEEDED",
+      "meu": {
+        "enabled": false,
+        "reason": "IP_ABOVE_ROP"
+      },
+      "warnings": [],
+      "explanation": "Tồn khả dụng 358 > điểm đặt hàng 119.7 (nhu cầu 2 ngày lead time 69.8 + safety stock 49.9); đủ bán khoảng 9.0 ngày. Chưa cần nhập."
+    }
+  },
+  {
+    "scenario": "3. Mì gói gần ROP, làm tròn pack 30 / MOQ 60",
+    "request": {
+      "store_id": "S001",
+      "sku_id": "SKU014",
+      "inventory": {
+        "on_hand": 150,
+        "on_order": 0,
+        "reserved": 12
+      }
+    },
+    "response": {
+      "store_id": "S001",
+      "sku_id": "SKU014",
+      "product_name": "Mì gói tôm chua cay",
+      "model_version": "lightgbm-direct-v1.0.0",
+      "forecast_method": "model",
+      "generated_at": "2026-11-10T07:29:29+00:00",
+      "as_of_date": "2026-11-09",
+      "lead_time_days": 3,
+      "service_level": 0.95,
+      "sigma_daily": 29.476,
+      "inventory_position": 138.0,
+      "confidence": "HIGH",
+      "lead_time_demand": 154.276,
+      "safety_stock": 83.977,
+      "reorder_point": 238.253,
+      "rop_order_qty": 120,
+      "suggested_order_qty": 150,
+      "days_of_cover": 2.3,
+      "requires_approval": true,
+      "forecast": [
+        {
+          "date": "2026-11-10",
+          "horizon": 1,
+          "predicted_demand": 49.769,
+          "baseline_seasonal_naive": 65.0
+        },
+        {
+          "date": "2026-11-11",
+          "horizon": 2,
+          "predicted_demand": 48.28,
+          "baseline_seasonal_naive": 47.0
+        },
+        {
+          "date": "2026-11-12",
+          "horizon": 3,
+          "predicted_demand": 56.227,
+          "baseline_seasonal_naive": 90.0
+        },
+        {
+          "date": "2026-11-13",
+          "horizon": 4,
+          "predicted_demand": 53.467,
+          "baseline_seasonal_naive": 36.0
+        },
+        {
+          "date": "2026-11-14",
+          "horizon": 5,
+          "predicted_demand": 65.026,
+          "baseline_seasonal_naive": 9.0
+        },
+        {
+          "date": "2026-11-15",
+          "horizon": 6,
+          "predicted_demand": 66.697,
+          "baseline_seasonal_naive": 98.0
+        },
+        {
+          "date": "2026-11-16",
+          "horizon": 7,
+          "predicted_demand": 85.204,
+          "baseline_seasonal_naive": 51.0
+        }
+      ],
+      "forecast_total": 424.67,
+      "alert_level": "CRITICAL",
+      "status": "REORDER_RECOMMENDED",
+      "meu": {
+        "enabled": true,
+        "cost_source": "product_master_demo_assumption",
+        "recommended_qty": 150,
+        "expected_utility": 696409.11,
+        "expected_utility_no_order": 587796.4,
+        "expected_utility_reference_qty": 688974.68,
+        "protection_period_days": 4,
+        "scenarios": [
+          {
+            "label": "very_low",
+            "probability": 0.2,
+            "demand": 132.19
+          },
+          {
+            "label": "low",
+            "probability": 0.2,
+            "demand": 176.83
+          },
+          {
+            "label": "base",
+            "probability": 0.2,
+            "demand": 207.74
+          },
+          {
+            "label": "high",
+            "probability": 0.2,
+            "demand": 238.66
+          },
+          {
+            "label": "very_high",
+            "probability": 0.2,
+            "demand": 283.29
+          }
+        ],
+        "top_candidates": [
+          {
+            "order_qty": 150,
+            "expected_utility": 696409.11
+          },
+          {
+            "order_qty": 180,
+            "expected_utility": 695920.11
+          },
+          {
+            "order_qty": 210,
+            "expected_utility": 695431.11
+          },
+          {
+            "order_qty": 240,
+            "expected_utility": 694942.11
+          },
+          {
+            "order_qty": 270,
+            "expected_utility": 694453.11
+          }
+        ],
+        "n_candidates": 12
+      },
+      "warnings": [],
+      "explanation": "Tồn khả dụng 138 <= điểm đặt hàng 238.3 (nhu cầu lead time 3 ngày = 154.3, safety stock 84.0 @ service level 95%). Lượng theo ROP: 120 (pack 30, MOQ 60). MEU chọn 150 đơn vị (utility kỳ vọng 696,409 so với 688,975 nếu đặt theo ROP). CẢNH BÁO: tồn hiện tại không đủ bán đến khi hàng về."
+    }
+  },
+  {
+    "scenario": "4. Táo nhập khẩu lead time 10 ngày > horizon 7",
+    "request": {
+      "store_id": "S001",
+      "sku_id": "SKU004",
+      "inventory": {
+        "on_hand": 8,
+        "on_order": 0,
+        "reserved": 0
+      }
+    },
+    "response": {
+      "store_id": "S001",
+      "sku_id": "SKU004",
+      "product_name": "Táo nhập khẩu 1kg",
+      "model_version": "lightgbm-direct-v1.0.0",
+      "forecast_method": "model",
+      "generated_at": "2026-11-10T07:29:29+00:00",
+      "as_of_date": "2026-11-09",
+      "lead_time_days": 10,
+      "service_level": 0.95,
+      "sigma_daily": 3.869,
+      "inventory_position": 8.0,
+      "confidence": "LOW",
+      "lead_time_demand": null,
+      "safety_stock": null,
+      "reorder_point": null,
+      "rop_order_qty": null,
+      "suggested_order_qty": null,
+      "days_of_cover": null,
+      "requires_approval": true,
+      "forecast": [
+        {
+          "date": "2026-11-10",
+          "horizon": 1,
+          "predicted_demand": 3.444,
+          "baseline_seasonal_naive": 9.0
+        },
+        {
+          "date": "2026-11-11",
+          "horizon": 2,
+          "predicted_demand": 3.689,
+          "baseline_seasonal_naive": 3.0
+        },
+        {
+          "date": "2026-11-12",
+          "horizon": 3,
+          "predicted_demand": 3.748,
+          "baseline_seasonal_naive": 0.0
+        },
+        {
+          "date": "2026-11-13",
+          "horizon": 4,
+          "predicted_demand": 3.857,
+          "baseline_seasonal_naive": 0.0
+        },
+        {
+          "date": "2026-11-14",
+          "horizon": 5,
+          "predicted_demand": 4.253,
+          "baseline_seasonal_naive": 4.0
+        },
+        {
+          "date": "2026-11-15",
+          "horizon": 6,
+          "predicted_demand": 4.444,
+          "baseline_seasonal_naive": 4.0
+        },
+        {
+          "date": "2026-11-16",
+          "horizon": 7,
+          "predicted_demand": 3.576,
+          "baseline_seasonal_naive": 3.0
+        }
+      ],
+      "forecast_total": 27.011,
+      "meu": {
+        "enabled": false,
+        "reason": "HORIZON_INSUFFICIENT"
+      },
+      "status": "HORIZON_INSUFFICIENT",
+      "alert_level": "MANUAL_REVIEW",
+      "warnings": [
+        "LOW_CONFIDENCE",
+        "HORIZON_INSUFFICIENT"
+      ],
+      "explanation": "Lead time 10 ngày dài hơn horizon dự báo 7 ngày; không ngoại suy. Cần duyệt thủ công hoặc mở rộng horizon."
+    }
+  },
+  {
+    "scenario": "5. SKU mới 5 ngày lịch sử (rule fallback)",
+    "request": {
+      "store_id": "S002",
+      "sku_id": "SKU032",
+      "inventory": {
+        "on_hand": 4,
+        "on_order": 0,
+        "reserved": 0
+      }
+    },
+    "response": {
+      "store_id": "S002",
+      "sku_id": "SKU032",
+      "product_name": "Nước ép trái cây 1L",
+      "model_version": "lightgbm-direct-v1.0.0",
+      "forecast_method": "rule_mean_fallback",
+      "generated_at": "2026-11-10T07:29:29+00:00",
+      "as_of_date": "2026-11-09",
+      "lead_time_days": 3,
+      "service_level": 0.95,
+      "sigma_daily": 1.875,
+      "inventory_position": 4.0,
+      "confidence": "LOW",
+      "lead_time_demand": 9.6,
+      "safety_stock": 5.343,
+      "reorder_point": 14.943,
+      "rop_order_qty": 12,
+      "suggested_order_qty": 24,
+      "days_of_cover": 1.2,
+      "requires_approval": true,
+      "forecast": [
+        {
+          "date": "2026-11-10",
+          "horizon": 1,
+          "predicted_demand": 3.2,
+          "baseline_seasonal_naive": null
+        },
+        {
+          "date": "2026-11-11",
+          "horizon": 2,
+          "predicted_demand": 3.2,
+          "baseline_seasonal_naive": null
+        },
+        {
+          "date": "2026-11-12",
+          "horizon": 3,
+          "predicted_demand": 3.2,
+          "baseline_seasonal_naive": 1.0
+        },
+        {
+          "date": "2026-11-13",
+          "horizon": 4,
+          "predicted_demand": 3.2,
+          "baseline_seasonal_naive": 1.0
+        },
+        {
+          "date": "2026-11-14",
+          "horizon": 5,
+          "predicted_demand": 3.2,
+          "baseline_seasonal_naive": 7.0
+        },
+        {
+          "date": "2026-11-15",
+          "horizon": 6,
+          "predicted_demand": 3.2,
+          "baseline_seasonal_naive": 5.0
+        },
+        {
+          "date": "2026-11-16",
+          "horizon": 7,
+          "predicted_demand": 3.2,
+          "baseline_seasonal_naive": 2.0
+        }
+      ],
+      "forecast_total": 22.4,
+      "alert_level": "CRITICAL",
+      "status": "REORDER_RECOMMENDED",
+      "meu": {
+        "enabled": true,
+        "cost_source": "product_master_demo_assumption",
+        "recommended_qty": 24,
+        "expected_utility": 312722.25,
+        "expected_utility_no_order": 149760.0,
+        "expected_utility_reference_qty": 308585.66,
+        "protection_period_days": 4,
+        "scenarios": [
+          {
+            "label": "very_low",
+            "probability": 0.2,
+            "demand": 7.99
+          },
+          {
+            "label": "low",
+            "probability": 0.2,
+            "demand": 10.83
+          },
+          {
+            "label": "base",
+            "probability": 0.2,
+            "demand": 12.8
+          },
+          {
+            "label": "high",
+            "probability": 0.2,
+            "demand": 14.77
+          },
+          {
+            "label": "very_high",
+            "probability": 0.2,
+            "demand": 17.61
+          }
+        ],
+        "top_candidates": [
+          {
+            "order_qty": 24,
+            "expected_utility": 312722.25
+          },
+          {
+            "order_qty": 36,
+            "expected_utility": 310766.13
+          },
+          {
+            "order_qty": 12,
+            "expected_utility": 308585.66
+          },
+          {
+            "order_qty": 0,
+            "expected_utility": 149760.0
+          }
+        ],
+        "n_candidates": 4
+      },
+      "warnings": [
+        "SIGMA_CATEGORY_CV_FALLBACK",
+        "INSUFFICIENT_HISTORY",
+        "LOW_CONFIDENCE"
+      ],
+      "explanation": "Tồn khả dụng 4 <= điểm đặt hàng 14.9 (nhu cầu lead time 3 ngày = 9.6, safety stock 5.3 @ service level 95%). Lượng theo ROP: 12 (pack 12, MOQ 12). MEU chọn 24 đơn vị (utility kỳ vọng 312,722 so với 308,586 nếu đặt theo ROP). CẢNH BÁO: tồn hiện tại không đủ bán đến khi hàng về."
+    }
+  },
+  {
+    "scenario": "6. Thịt heo (tươi sống) – chi phí do Backend truyền",
+    "request": {
+      "store_id": "S003",
+      "sku_id": "SKU008",
+      "inventory": {
+        "on_hand": 6,
+        "on_order": 0,
+        "reserved": 1
+      },
+      "lead_time_days": 1,
+      "costs": {
+        "selling_price": 85000,
+        "purchase_cost": 66000,
+        "holding_cost_per_unit": 300,
+        "stockout_penalty_per_unit": 8500,
+        "waste_cost_per_unit": 33000
+      }
+    },
+    "response": {
+      "store_id": "S003",
+      "sku_id": "SKU008",
+      "product_name": "Thịt heo ba rọi 500g",
+      "model_version": "lightgbm-direct-v1.0.0",
+      "forecast_method": "model",
+      "generated_at": "2026-11-10T07:29:29+00:00",
+      "as_of_date": "2026-11-09",
+      "lead_time_days": 1,
+      "service_level": 0.95,
+      "sigma_daily": 6.325,
+      "inventory_position": 5.0,
+      "confidence": "MEDIUM",
+      "lead_time_demand": 10.442,
+      "safety_stock": 10.403,
+      "reorder_point": 20.845,
+      "rop_order_qty": 20,
+      "suggested_order_qty": 15,
+      "days_of_cover": 0.4,
+      "requires_approval": true,
+      "forecast": [
+        {
+          "date": "2026-11-10",
+          "horizon": 1,
+          "predicted_demand": 10.442,
+          "baseline_seasonal_naive": 8.0
+        },
+        {
+          "date": "2026-11-11",
+          "horizon": 2,
+          "predicted_demand": 10.601,
+          "baseline_seasonal_naive": 5.0
+        },
+        {
+          "date": "2026-11-12",
+          "horizon": 3,
+          "predicted_demand": 10.698,
+          "baseline_seasonal_naive": 13.0
+        },
+        {
+          "date": "2026-11-13",
+          "horizon": 4,
+          "predicted_demand": 11.699,
+          "baseline_seasonal_naive": 15.0
+        },
+        {
+          "date": "2026-11-14",
+          "horizon": 5,
+          "predicted_demand": 12.504,
+          "baseline_seasonal_naive": 9.0
+        },
+        {
+          "date": "2026-11-15",
+          "horizon": 6,
+          "predicted_demand": 12.79,
+          "baseline_seasonal_naive": 13.0
+        },
+        {
+          "date": "2026-11-16",
+          "horizon": 7,
+          "predicted_demand": 10.661,
+          "baseline_seasonal_naive": 10.0
+        }
+      ],
+      "forecast_total": 79.395,
+      "alert_level": "CRITICAL",
+      "status": "REORDER_RECOMMENDED",
+      "meu": {
+        "enabled": true,
+        "cost_source": "request",
+        "recommended_qty": 15,
+        "expected_utility": 530073.96,
+        "expected_utility_no_order": 288634.5,
+        "expected_utility_reference_qty": 497856.84,
+        "protection_period_days": 2,
+        "scenarios": [
+          {
+            "label": "very_low",
+            "probability": 0.2,
+            "demand": 9.58
+          },
+          {
+            "label": "low",
+            "probability": 0.2,
+            "demand": 16.35
+          },
+          {
+            "label": "base",
+            "probability": 0.2,
+            "demand": 21.04
+          },
+          {
+            "label": "high",
+            "probability": 0.2,
+            "demand": 25.73
+          },
+          {
+            "label": "very_high",
+            "probability": 0.2,
+            "demand": 32.51
+          }
+        ],
+        "top_candidates": [
+          {
+            "order_qty": 15,
+            "expected_utility": 530073.96
+          },
+          {
+            "order_qty": 20,
+            "expected_utility": 497856.84
+          },
+          {
+            "order_qty": 10,
+            "expected_utility": 497728.06
+          },
+          {
+            "order_qty": 25,
+            "expected_utility": 401076.7
+          },
+          {
+            "order_qty": 0,
+            "expected_utility": 288634.5
+          }
+        ],
+        "n_candidates": 12
+      },
+      "warnings": [],
+      "explanation": "Tồn khả dụng 5 <= điểm đặt hàng 20.8 (nhu cầu lead time 1 ngày = 10.4, safety stock 10.4 @ service level 95%). Lượng theo ROP: 20 (pack 5, MOQ 10). MEU chọn 15 đơn vị (utility kỳ vọng 530,074 so với 497,857 nếu đặt theo ROP). CẢNH BÁO: tồn hiện tại không đủ bán đến khi hàng về."
+    }
+  },
+  {
+    "scenario": "7. Thiếu tham số chi phí → không chạy MEU",
+    "request": {
+      "store_id": "S001",
+      "sku_id": "SKU017",
+      "inventory": {
+        "on_hand": 30,
+        "on_order": 0,
+        "reserved": 0
+      },
+      "costs": {
+        "selling_price": 11000,
+        "purchase_cost": 8000
+      }
+    },
+    "response": {
+      "store_id": "S001",
+      "sku_id": "SKU017",
+      "product_name": "Nước ngọt lon 330ml",
+      "model_version": "lightgbm-direct-v1.0.0",
+      "forecast_method": "model",
+      "generated_at": "2026-11-10T07:29:29+00:00",
+      "as_of_date": "2026-11-09",
+      "lead_time_days": 2,
+      "service_level": 0.95,
+      "sigma_daily": 16.661,
+      "inventory_position": 30.0,
+      "confidence": "HIGH",
+      "lead_time_demand": 64.657,
+      "safety_stock": 38.757,
+      "reorder_point": 103.414,
+      "rop_order_qty": 96,
+      "suggested_order_qty": 96,
+      "days_of_cover": 0.5,
+      "requires_approval": true,
+      "forecast": [
+        {
+          "date": "2026-11-10",
+          "horizon": 1,
+          "predicted_demand": 32.369,
+          "baseline_seasonal_naive": 66.0
+        },
+        {
+          "date": "2026-11-11",
+          "horizon": 2,
+          "predicted_demand": 32.288,
+          "baseline_seasonal_naive": 10.0
+        },
+        {
+          "date": "2026-11-12",
+          "horizon": 3,
+          "predicted_demand": 59.505,
+          "baseline_seasonal_naive": 32.0
+        },
+        {
+          "date": "2026-11-13",
+          "horizon": 4,
+          "predicted_demand": 64.288,
+          "baseline_seasonal_naive": 15.0
+        },
+        {
+          "date": "2026-11-14",
+          "horizon": 5,
+          "predicted_demand": 71.006,
+          "baseline_seasonal_naive": 29.0
+        },
+        {
+          "date": "2026-11-15",
+          "horizon": 6,
+          "predicted_demand": 66.165,
+          "baseline_seasonal_naive": 43.0
+        },
+        {
+          "date": "2026-11-16",
+          "horizon": 7,
+          "predicted_demand": 58.28,
+          "baseline_seasonal_naive": 31.0
+        }
+      ],
+      "forecast_total": 383.901,
+      "alert_level": "CRITICAL",
+      "status": "REORDER_RECOMMENDED",
+      "meu": {
+        "enabled": false,
+        "reason": "Thiếu tham số chi phí cho MEU: ['holding_cost_per_unit', 'stockout_penalty_per_unit', 'waste_cost_per_unit']"
+      },
+      "warnings": [
+        "MEU_INPUT_MISSING"
+      ],
+      "explanation": "Tồn khả dụng 30 <= điểm đặt hàng 103.4 (nhu cầu lead time 2 ngày = 64.7, safety stock 38.8 @ service level 95%). Lượng theo ROP: 96 (pack 24, MOQ 48). CẢNH BÁO: tồn hiện tại không đủ bán đến khi hàng về."
+    }
+  },
+  {
+    "scenario": "8. Reserved > On hand + On order",
+    "request": {
+      "store_id": "S002",
+      "sku_id": "SKU011",
+      "inventory": {
+        "on_hand": 5,
+        "on_order": 0,
+        "reserved": 20
+      }
+    },
+    "response": {
+      "store_id": "S002",
+      "sku_id": "SKU011",
+      "product_name": "Trứng gà hộp 10 quả",
+      "model_version": "lightgbm-direct-v1.0.0",
+      "forecast_method": "model",
+      "generated_at": "2026-11-10T07:29:29+00:00",
+      "as_of_date": "2026-11-09",
+      "lead_time_days": 2,
+      "service_level": 0.95,
+      "sigma_daily": 10.793,
+      "inventory_position": -15.0,
+      "confidence": "MEDIUM",
+      "lead_time_demand": null,
+      "safety_stock": null,
+      "reorder_point": null,
+      "rop_order_qty": null,
+      "suggested_order_qty": null,
+      "days_of_cover": null,
+      "requires_approval": true,
+      "forecast": [
+        {
+          "date": "2026-11-10",
+          "horizon": 1,
+          "predicted_demand": 19.936,
+          "baseline_seasonal_naive": 27.0
+        },
+        {
+          "date": "2026-11-11",
+          "horizon": 2,
+          "predicted_demand": 20.175,
+          "baseline_seasonal_naive": 29.0
+        },
+        {
+          "date": "2026-11-12",
+          "horizon": 3,
+          "predicted_demand": 20.773,
+          "baseline_seasonal_naive": 6.0
+        },
+        {
+          "date": "2026-11-13",
+          "horizon": 4,
+          "predicted_demand": 23.332,
+          "baseline_seasonal_naive": 17.0
+        },
+        {
+          "date": "2026-11-14",
+          "horizon": 5,
+          "predicted_demand": 25.678,
+          "baseline_seasonal_naive": 47.0
+        },
+        {
+          "date": "2026-11-15",
+          "horizon": 6,
+          "predicted_demand": 26.544,
+          "baseline_seasonal_naive": 24.0
+        },
+        {
+          "date": "2026-11-16",
+          "horizon": 7,
+          "predicted_demand": 20.561,
+          "baseline_seasonal_naive": 17.0
+        }
+      ],
+      "forecast_total": 156.999,
+      "meu": {
+        "enabled": false,
+        "reason": "INVENTORY_DATA_CHECK"
+      },
+      "status": "INVENTORY_DATA_CHECK",
+      "alert_level": "MANUAL_REVIEW",
+      "warnings": [
+        "NEGATIVE_INVENTORY_POSITION"
+      ],
+      "explanation": "Inventory position âm (reserved > on_hand + on_order). Cần kiểm tra dữ liệu reserved/on_order trước khi đề xuất."
+    }
+  },
+  {
+    "scenario": "9. SKU không tồn tại",
+    "request": {
+      "store_id": "S001",
+      "sku_id": "SKU999",
+      "inventory": {
+        "on_hand": 5,
+        "on_order": 0,
+        "reserved": 0
+      }
+    },
+    "error": {
+      "error_code": "UNKNOWN_SKU",
+      "message": "SKU SKU999 không có trong product master",
+      "http_status": 404
+    }
+  }
+]
