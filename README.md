@@ -24,7 +24,6 @@ Track the acceptance checklist in [release readiness #46](https://github.com/ztd
 Install Docker Desktop with Compose. From the repository root in PowerShell:
 
 ```powershell
-Copy-Item .env.example .env
 docker compose up -d --build
 docker compose exec api python scripts/seed.py
 python scripts/demo_smoke.py
@@ -43,7 +42,7 @@ Prerequisites: Python 3.11, Node.js 22, npm, and Docker Compose (or local Postgr
 1. Create local configuration and start the two infrastructure services:
 
    ```powershell
-   Copy-Item .env.example .env
+   if (-not (Test-Path .env)) { Copy-Item .env.example .env }
    docker compose up -d postgres redis
    ```
 

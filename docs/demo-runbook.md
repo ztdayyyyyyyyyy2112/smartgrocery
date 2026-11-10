@@ -5,7 +5,6 @@
 Use Docker Desktop/Compose. From the repository root:
 
 ```powershell
-Copy-Item .env.example .env
 docker compose up -d --build
 docker compose exec api python scripts/seed.py
 python scripts/demo_smoke.py
