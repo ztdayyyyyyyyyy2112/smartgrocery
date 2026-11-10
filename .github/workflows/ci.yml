@@ -68,4 +68,18 @@ jobs:
         working-directory: services/api
       - run: python scripts/seed.py
         working-directory: services/api
-      - run: python -m pytest -q
+      - run: python -m pytest tests/api -q
+
+  intelligence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: services/intelligence/requirements.txt
+      - run: python -m pip install -r services/intelligence/requirements.txt
+      - run: python scripts/run_pipeline.py --regenerate-data
+        working-directory: services/intelligence
+      - run: python -m pytest tests --ignore=tests/api -q

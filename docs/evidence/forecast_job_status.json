@@ -1,0 +1,15 @@
+{
+  "job": "forecast_refresh",
+  "started_at": "2026-11-10T07:29:29+00:00",
+  "status": "SUCCESS",
+  "error": null,
+  "as_of_date": "2026-11-09",
+  "model_version": "lightgbm-direct-v1.0.0",
+  "n_series": 95,
+  "n_success": 92,
+  "n_fallback": 3,
+  "n_failed": 0,
+  "n_rows": 665,
+  "finished_at": "2026-11-10T07:29:30+00:00",
+  "duration_sec": 1.04
+}

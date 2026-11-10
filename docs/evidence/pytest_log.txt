@@ -1,0 +1,52 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.1.1, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /home/claude/smartgrocery
+plugins: platformdirs-4.13.5, anyio-4.15.1
+collecting ... collected 41 items / 1 skipped
+
+tests/test_baseline.py::test_seasonal_naive_fallback_two_weeks PASSED    [  2%]
+tests/test_baseline.py::test_seasonal_naive_future_uses_calendar_not_last_rows PASSED [  4%]
+tests/test_baseline.py::test_metrics_values PASSED                       [  7%]
+tests/test_baseline.py::test_wape_undefined_when_actual_zero PASSED      [  9%]
+tests/test_data_pipeline.py::test_cleaning_rules PASSED                  [ 12%]
+tests/test_data_pipeline.py::test_same_day_multiple_transactions_not_deduplicated PASSED [ 14%]
+tests/test_data_pipeline.py::test_panel_integrity PASSED                 [ 17%]
+tests/test_data_pipeline.py::test_missing_days_not_filled_with_zero PASSED [ 19%]
+tests/test_data_pipeline.py::test_zero_sales_only_on_open_days PASSED    [ 21%]
+tests/test_data_pipeline.py::test_series_start_at_listing_date PASSED    [ 24%]
+tests/test_features.py::test_lag_and_rolling_use_only_past PASSED        [ 26%]
+tests/test_features.py::test_no_future_leakage PASSED                    [ 29%]
+tests/test_features.py::test_same_weekday_lag_mapping PASSED             [ 31%]
+tests/test_features.py::test_tet_window_feature PASSED                   [ 34%]
+tests/test_features.py::test_feature_list_unique PASSED                  [ 36%]
+tests/test_inference.py::test_reorder_response_matches_contract PASSED   [ 39%]
+tests/test_inference.py::test_no_reorder_when_stock_high PASSED          [ 41%]
+tests/test_inference.py::test_horizon_insufficient PASSED                [ 43%]
+tests/test_inference.py::test_negative_inventory_position PASSED         [ 46%]
+tests/test_inference.py::test_meu_missing_costs_falls_back_to_rop PASSED [ 48%]
+tests/test_inference.py::test_forecast_horizon_param PASSED              [ 51%]
+tests/test_inference.py::test_unknown_sku PASSED                         [ 53%]
+tests/test_inference.py::test_unknown_series PASSED                      [ 56%]
+tests/test_inference.py::test_input_validation PASSED                    [ 58%]
+tests/test_inference.py::test_model_unavailable_fallback PASSED          [ 60%]
+tests/test_inference.py::test_refresh_job_degraded_keeps_running PASSED  [ 63%]
+tests/test_model.py::test_artifact_loads_with_7_horizons PASSED          [ 65%]
+tests/test_model.py::test_latest_forecast_shape_and_values PASSED        [ 68%]
+tests/test_model.py::test_lightgbm_beats_seasonal_naive PASSED           [ 70%]
+tests/test_model.py::test_forecast_reproducible PASSED                   [ 73%]
+tests/test_model.py::test_new_sku_flagged PASSED                         [ 75%]
+tests/test_optimization.py::test_inventory_position_guide_example PASSED [ 78%]
+tests/test_optimization.py::test_rop_qty_and_pack_rounding_guide_example PASSED [ 80%]
+tests/test_optimization.py::test_no_order_when_ip_above_rop PASSED       [ 82%]
+tests/test_optimization.py::test_moq_applied PASSED                      [ 85%]
+tests/test_optimization.py::test_safety_stock_formula PASSED             [ 87%]
+tests/test_optimization.py::test_lead_time_beyond_horizon_raises PASSED  [ 90%]
+tests/test_optimization.py::test_meu_requires_costs PASSED               [ 92%]
+tests/test_optimization.py::test_meu_scenarios_probabilities_sum_to_one PASSED [ 95%]
+tests/test_optimization.py::test_meu_perishable_orders_less_than_long_life PASSED [ 97%]
+tests/test_optimization.py::test_meu_respects_pack_and_moq PASSED        [100%]
+
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_api.py:4: could not import 'fastapi': No module named 'fastapi'
+======================== 41 passed, 1 skipped in 6.06s =========================
