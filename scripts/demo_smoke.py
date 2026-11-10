@@ -24,6 +24,15 @@ def call(path, method="GET", body=None, token=None, idempotency=None):
 
 
 def main():
+    for attempt in range(20):
+        try:
+            with urlopen("http://localhost:3000", timeout=5) as response:
+                assert response.status == 200 and b"SmartGrocery" in response.read()
+            break
+        except Exception:
+            if attempt == 19:
+                raise RuntimeError("Web app did not become available on localhost:3000")
+            time.sleep(1)
     password = "DemoPass123!"
     customer = call("/auth/login", "POST", {"email": "customer@smartgrocery.example.com", "password": password})["access_token"]
     merchant = call("/auth/login", "POST", {"email": "merchant@smartgrocery.example.com", "password": password})["access_token"]
