@@ -94,5 +94,7 @@ jobs:
       - run: docker compose up -d --build
       - run: docker compose exec -T api python scripts/seed.py
       - run: python scripts/demo_smoke.py
+      - if: failure()
+        run: docker compose logs --tail=120 api worker intelligence
       - if: always()
         run: docker compose down -v
