@@ -83,3 +83,18 @@ jobs:
       - run: python scripts/run_pipeline.py --regenerate-data
         working-directory: services/intelligence
       - run: python -m pytest tests/intelligence -q
+
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: docker compose up -d --build
+      - run: docker compose exec -T api python scripts/seed.py
+      - run: python scripts/demo_smoke.py
+      - if: failure()
+        run: docker compose logs --tail=120 api worker intelligence
+      - if: always()
+        run: docker compose down -v

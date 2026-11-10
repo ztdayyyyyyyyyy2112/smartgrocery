@@ -40,6 +40,24 @@ def _order_body(order: Order, items: list[OrderItem]) -> dict:
     }
 
 
+@router.get("")
+def list_orders(db: Session = Depends(get_db), user=Depends(current_user)) -> list[dict]:
+    stmt = select(Order).order_by(Order.created_at.desc()).limit(100)
+    if user.role == UserRole.CUSTOMER:
+        stmt = stmt.where(Order.customer_id == user.id)
+    orders = db.scalars(stmt).all()
+    return [_order_body(order, list(db.scalars(select(OrderItem).where(OrderItem.order_id == order.id)).all()))
+            for order in orders]
+
+
+@router.get("/{order_id}")
+def get_order(order_id: UUID, db: Session = Depends(get_db), user=Depends(current_user)) -> dict:
+    order = db.get(Order, order_id)
+    if order is None or (user.role == UserRole.CUSTOMER and order.customer_id != user.id):
+        raise HTTPException(status_code=404, detail="Order not found")
+    return _order_body(order, list(db.scalars(select(OrderItem).where(OrderItem.order_id == order.id)).all()))
+
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_order(payload: CreateOrderRequest, idempotency_key: str = Header(..., alias="Idempotency-Key"), db: Session = Depends(get_db), user=Depends(current_user)) -> dict:
     request_hash = hashlib.sha256(json.dumps(payload.model_dump(mode="json"), sort_keys=True).encode()).hexdigest()

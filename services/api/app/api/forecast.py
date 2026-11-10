@@ -17,7 +17,7 @@ merchant_admin = require_roles(UserRole.MERCHANT, UserRole.ADMIN)
 class ForecastJobRequest(BaseModel):
     store_id: UUID
     as_of: date = Field(default_factory=date.today)
-    horizon_days: int = Field(default=7, ge=1, le=90)
+    horizon_days: int = Field(default=7, ge=1, le=7)
 
 
 class ForecastOutput(BaseModel):
@@ -57,6 +57,16 @@ def create_forecast_job(payload: ForecastJobRequest, db: Session = Depends(get_d
     db.add(job)
     db.commit()
     db.refresh(job)
+    from app.core.config import get_settings
+    if get_settings().forecast_autorun:
+        from app.worker import run_forecast_job
+        try:
+            run_forecast_job.delay(str(job.id))
+        except Exception as exc:
+            job.status = ForecastJobStatus.FAILED
+            job.error_message = f"Could not queue forecast job: {type(exc).__name__}"
+            db.commit()
+            raise HTTPException(status_code=503, detail="Forecast worker unavailable") from exc
     return {"job_id": str(job.id), "status": job.status.value}
 
 
@@ -65,7 +75,8 @@ def get_forecast_job(job_id: UUID, db: Session = Depends(get_db), _user=Depends(
     job = db.get(ForecastJob, job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Forecast job not found")
-    return {"job_id": str(job.id), "status": job.status.value, "error_message": job.error_message}
+    return {"job_id": str(job.id), "status": job.status.value, "as_of": job.as_of.isoformat(),
+            "error_message": job.error_message}
 
 
 @router.post("/jobs/{job_id}/result")

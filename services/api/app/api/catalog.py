@@ -7,9 +7,15 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.models import Category, InventoryBatch, Product
+from app.models import Category, InventoryBatch, Product, Store
 
 router = APIRouter(tags=["catalog"])
+
+
+@router.get("/stores")
+def stores(db: Session = Depends(get_db)) -> list[dict]:
+    return [{"id": str(store.id), "code": store.code, "name": store.name}
+            for store in db.scalars(select(Store).where(Store.is_active.is_(True)).order_by(Store.code)).all()]
 
 
 class CategoryResponse(BaseModel):
