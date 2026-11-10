@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { cart, logout, session, type Session } from "../../lib/demo";
+import { api, cart, loadCart, logout, selectedStore, session, type Product, type Session } from "../../lib/demo";
 
 const navigation = [
   { label: "Home", href: "/" },
@@ -39,11 +39,15 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [current, setCurrent] = useState<Session | null>(null);
   const [count, setCount] = useState(0);
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<Product[]>([]);
   useEffect(() => {
     const sync = () => { setCurrent(session()); setCount(cart().reduce((sum, item) => sum + item.quantity, 0)); };
-    sync(); window.addEventListener("smartgrocery:session", sync); window.addEventListener("smartgrocery:cart", sync); window.addEventListener("storage", sync);
-    return () => { window.removeEventListener("smartgrocery:session", sync); window.removeEventListener("smartgrocery:cart", sync); window.removeEventListener("storage", sync); };
+    const accountChanged = () => { sync(); if (session()?.user.role === "customer") void loadCart().catch(() => {}); };
+    accountChanged(); window.addEventListener("smartgrocery:session", accountChanged); window.addEventListener("smartgrocery:cart", sync); window.addEventListener("storage", accountChanged);
+    return () => { window.removeEventListener("smartgrocery:session", accountChanged); window.removeEventListener("smartgrocery:cart", sync); window.removeEventListener("storage", accountChanged); };
   }, []);
+  useEffect(() => { if (!query.trim()) return; let cancelled = false; const timer = setTimeout(() => { const store = selectedStore(); api<{ items: Product[] }>(`/api/v1/products?q=${encodeURIComponent(query.trim())}&page_size=6${store ? `&store_id=${store}` : ""}`).then(result => { if (!cancelled) setSuggestions(result.items); }).catch(() => { if (!cancelled) setSuggestions([]); }); }, 180); return () => { cancelled = true; clearTimeout(timer); }; }, [query]);
   const nav = navigation.filter(item => item.href !== "/dashboard" || current?.user.role === "merchant" || current?.user.role === "admin");
 
   function isActive(href: string) {
@@ -76,24 +80,14 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <Link
-          href="/products"
-          aria-label="Browse grocery products"
-          className="flex min-w-0 flex-1 items-center justify-center gap-3 rounded-lg border border-sky-200 bg-white px-3 py-2.5 text-sm text-muted shadow-sm transition hover:border-primary sm:justify-between"
-        >
-          <span className="hidden min-w-0 flex-1 truncate sm:inline">
-            Browse products and categories
-          </span>
-          <span aria-hidden="true" className="flex h-8 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-white">
-            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="10.8" cy="10.8" r="6.8" />
-              <path d="m16 16 4.5 4.5" />
-            </svg>
-          </span>
-        </Link>
+        <form className="relative flex min-w-0 flex-1 rounded-lg bg-white" onSubmit={event => { event.preventDefault(); router.push(`/products?q=${encodeURIComponent(query.trim())}`); window.dispatchEvent(new CustomEvent("smartgrocery:search", { detail: query.trim() })); setSuggestions([]); }}>
+          <input aria-label="Tìm sản phẩm" value={query} onChange={event => { setQuery(event.target.value); if (!event.target.value.trim()) setSuggestions([]); }} placeholder="Tìm sản phẩm hoặc SKU" className="min-w-0 flex-1 rounded-lg px-3 py-2.5 text-foreground outline-none" />
+          <button type="submit" aria-label="Tìm kiếm" className="m-1 rounded-md bg-primary px-3 text-white">⌕</button>
+          {query.trim() && suggestions.length > 0 && <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border bg-white p-2 shadow-lg">{suggestions.map(product => <Link key={product.id} href={`/products/${product.id}`} onClick={() => { setQuery(""); setSuggestions([]); }} className="block rounded px-2 py-2 text-sm hover:bg-primary-light">{product.name} · {product.sku}</Link>)}</div>}
+        </form>
 
         <div className="hidden shrink-0 items-center gap-3 sm:flex">
-          <Link
+          {current?.user.role === "customer" && <Link
             href="/cart"
             aria-label="Shopping cart"
             title="Shopping cart"
@@ -102,8 +96,8 @@ export default function Navbar() {
           >
             <CartIcon className="h-7 w-7 text-white" />
             {count > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-red-600 px-1.5 text-xs font-bold text-white">{count}</span>}
-          </Link>
-          {current ? <div className="flex items-center gap-2 text-sm text-white"><span>{current.user.full_name} · {current.user.role === "customer" ? "Khách hàng" : "Người bán"}</span><button onClick={() => { logout(); router.push("/"); }} className="rounded-lg bg-white px-3 py-2 text-primary-dark">Đăng xuất</button></div> : <Link href="/login" className="rounded-lg bg-white px-4 py-2.5 font-semibold text-primary-dark">Đăng nhập</Link>}
+          </Link>}
+          {current ? <div className="flex items-center gap-2 text-sm text-white"><span>{current.user.full_name} · {current.user.role === "customer" ? "Khách hàng" : "Người bán"}</span><button onClick={async () => { await logout(); router.push("/"); }} className="rounded-lg bg-white px-3 py-2 text-primary-dark">Đăng xuất</button></div> : <Link href="/login" className="rounded-lg bg-white px-4 py-2.5 font-semibold text-primary-dark">Đăng nhập</Link>}
         </div>
 
         <button
@@ -159,7 +153,7 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
-            <Link
+            {current?.user.role === "customer" && <Link
               href="/cart"
               aria-label="Shopping cart"
               aria-current={pathname === "/cart" ? "page" : undefined}
@@ -169,8 +163,8 @@ export default function Navbar() {
               <CartIcon className="h-5 w-5 text-primary-dark" />
               <span>Shopping cart</span>
               {count > 0 && <span className="rounded-full bg-red-600 px-2 text-xs text-white">{count}</span>}
-            </Link>
-            {current ? <button type="button" onClick={() => { logout(); router.push("/"); }} className="rounded-lg px-3 py-2.5 text-left">{current.user.full_name} · Đăng xuất</button> : <Link
+            </Link>}
+            {current ? <button type="button" onClick={async () => { await logout(); router.push("/"); }} className="rounded-lg px-3 py-2.5 text-left">{current.user.full_name} · Đăng xuất</button> : <Link
               href="/login"
               className="rounded-lg px-3 py-2.5 font-medium text-foreground hover:bg-primary-light"
               onClick={() => setMenuOpen(false)}

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, cart, money, saveCart, selectedStore, session, type CartItem, type Order, type Store } from "../../../lib/demo";
+import { api, loadCart, money, saveCart, selectedStore, session, type CartItem, type Order, type Store } from "../../../lib/demo";
 export default function CartPage() {
   const router = useRouter();
   const [items, setItems] = useState<CartItem[]>([]);
@@ -13,8 +13,18 @@ export default function CartPage() {
   const [recipientName, setRecipientName] = useState("");
   const [deliveryPhone, setDeliveryPhone] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
-  useEffect(() => { queueMicrotask(() => { setItems(cart()); setRecipientName(session()?.user.full_name || ""); }); if (session()) api<{ full_name: string; phone: string | null; default_address: string | null }>("/api/v1/auth/me").then(user => { setRecipientName(user.full_name); setDeliveryPhone(user.phone || ""); setDeliveryAddress(user.default_address || ""); }).catch(() => {}); api<Store[]>("/api/v1/stores").then(data => { setStores(data); setStoreId(selectedStore() || data.find(x => x.code === "S001")?.id || ""); }).catch(e => setError(e.message)); }, []);
-  function update(id: string, quantity: number) { const next = items.map(item => item.product.id === id ? { ...item, quantity: Math.max(0, Math.min(quantity, Number(item.product.available_qty))) } : item).filter(item => item.quantity > 0); setItems(next); saveCart(next); }
+  useEffect(() => {
+    const clearOnLogout = () => { if (session()?.user.role !== "customer") { setItems([]); setRecipientName(""); setDeliveryPhone(""); setDeliveryAddress(""); } };
+    window.addEventListener("smartgrocery:session", clearOnLogout);
+    if (session()?.user.role === "customer") {
+      loadCart().then(data => { setItems(data); setStoreId(selectedStore()); }).catch(e => setError(e.message));
+      queueMicrotask(() => setRecipientName(session()?.user.full_name || ""));
+      api<{ full_name: string; phone: string | null; default_address: string | null }>("/api/v1/auth/me").then(user => { if (session()?.user.role === "customer") { setRecipientName(user.full_name); setDeliveryPhone(user.phone || ""); setDeliveryAddress(user.default_address || ""); } }).catch(() => {});
+    }
+    api<Store[]>("/api/v1/stores").then(data => { setStores(data); setStoreId(selectedStore() || data.find(x => x.code === "S001")?.id || ""); }).catch(e => setError(e.message));
+    return () => window.removeEventListener("smartgrocery:session", clearOnLogout);
+  }, []);
+  async function update(id: string, quantity: number) { const next = items.map(item => item.product.id === id ? { ...item, quantity: Math.max(0, Math.min(quantity, Number(item.product.available_qty))) } : item).filter(item => item.quantity > 0); try { setItems(await saveCart(next)); } catch (err) { setError((err as Error).message); } }
   async function checkout() {
     if (!session()) { router.push("/login"); return; }
     if (session()?.user.role !== "customer") { setError("Hãy đăng nhập bằng tài khoản khách hàng để đặt hàng."); return; }
@@ -22,11 +32,12 @@ export default function CartPage() {
     setBusy(true); setError("");
     try {
       const order = await api<Order>("/api/v1/orders", { method: "POST", headers: { "Idempotency-Key": crypto.randomUUID() }, body: JSON.stringify({ store_id: storeId, recipient_name: recipientName, delivery_phone: deliveryPhone, delivery_address: deliveryAddress, items: items.map(item => ({ product_id: item.product.id, quantity: item.quantity })) }) });
-      saveCart([]); setItems([]); router.push(`/orders?created=${order.id}`);
+      setItems(await loadCart()); router.push(`/orders?created=${order.id}`);
     } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
   }
   return <section className="sg-container py-14"><div className="mx-auto max-w-3xl rounded-2xl border border-border bg-white p-8 shadow-sm">
     <h1 className="text-3xl font-bold">Giỏ hàng</h1>
+    {session()?.user.role !== "customer" && <p className="mt-3"><Link href="/login" className="text-primary underline">Đăng nhập tài khoản khách hàng</Link> để lưu giỏ hàng theo tài khoản.</p>}
     {items.length === 0 ? <p className="mt-5">Giỏ hàng trống. <Link href="/products" className="text-primary underline">Chọn sản phẩm</Link></p> : <div className="mt-6 space-y-4">{items.map(item => <div key={item.product.id} className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
       <div><p className="font-semibold">{item.product.name}</p><p className="text-sm text-muted">{money(item.product.selling_price)} / {item.product.unit}</p></div>
       <label>Số lượng <input type="number" min="0" max={item.product.available_qty} value={item.quantity} onChange={e => update(item.product.id, Number(e.target.value))} className="ml-2 w-20 rounded-lg border border-border p-2" /></label>

@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { api, saveSession, type Session } from "../../../lib/demo";
+import { api, loadCart, saveSession, type Session } from "../../../lib/demo";
 export default function LoginPage() {
   const router = useRouter();
   const [register, setRegister] = useState(false);
@@ -18,12 +18,13 @@ export default function LoginPage() {
     try {
       const result = await api<Session>(`/api/v1/auth/${register ? "register" : "login"}`, { method: "POST", body: JSON.stringify(register ? { email, password, full_name: name, phone, default_address: address, privacy_consent: consent } : { email, password }) });
       saveSession(result);
+      if (result.user.role === "customer") await loadCart();
       router.push(result.user.role === "customer" ? "/products" : "/dashboard");
     } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
   }
   return <section className="sg-container py-16"><div className="mx-auto max-w-lg rounded-2xl border border-border bg-white p-8 shadow-sm">
     <h1 className="text-3xl font-bold">{register ? "Tạo tài khoản" : "Đăng nhập"}</h1>
-    <p className="mt-3 text-sm text-muted">Demo: customer@smartgrocery.example.com hoặc merchant@smartgrocery.example.com · mật khẩu DemoPass123!</p>
+    <p className="mt-3 text-sm text-muted">Demo: customer@smartgrocery.example.com (khách); merchant@smartgrocery.example.com (Quận 1); merchant.thuduc@smartgrocery.example.com (Thủ Đức); merchant.binhthanh@smartgrocery.example.com (Bình Thạnh). Mật khẩu chung: DemoPass123!</p>
     <form onSubmit={submit} className="mt-7 space-y-4">
       {register && <label className="block">Họ tên<input required value={name} onChange={e => setName(e.target.value)} className="mt-1 w-full rounded-xl border border-border p-3" /></label>}
       {register && <label className="block">Số điện thoại<input required minLength={8} value={phone} onChange={e => setPhone(e.target.value)} className="mt-1 w-full rounded-xl border border-border p-3" /></label>}

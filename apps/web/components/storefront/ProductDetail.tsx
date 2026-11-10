@@ -1,9 +1,11 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { addToCart, api, money, selectedStore, type Product } from "../../lib/demo";
+import { addToCart, api, money, selectedStore, session, type Product } from "../../lib/demo";
 export default function ProductDetail({ id }: { id: string }) {
+  const router = useRouter();
   const [product, setProduct] = useState<Product | null>(null);
   const [error, setError] = useState("");
   const [added, setAdded] = useState(false);
@@ -17,7 +19,7 @@ export default function ProductDetail({ id }: { id: string }) {
       <p className="mt-4">{product.description || "Sản phẩm trong catalog demo SmartGrocery."}</p>
       <p className="mt-4 text-2xl font-bold text-primary-dark">{money(product.selling_price)}</p>
       <p className="mt-2">Tồn khả dụng: {product.available_qty} {product.unit}</p>
-      <button type="button" disabled={Number(product.available_qty) <= 0} onClick={() => { addToCart(product); setAdded(true); }} className="mt-6 rounded-xl bg-primary px-6 py-3 font-semibold text-white disabled:opacity-50">Thêm vào giỏ</button>
+      <button type="button" disabled={Number(product.available_qty) <= 0} onClick={() => { if (session()?.user.role !== "customer") { router.push("/login"); return; } void addToCart(product).then(() => setAdded(true)).catch(err => setError(err.message)); }} className="mt-6 rounded-xl bg-primary px-6 py-3 font-semibold text-white disabled:opacity-50">Thêm vào giỏ</button>
       {added && <p role="status" className="mt-3">Đã thêm vào giỏ. <Link href="/cart" className="underline">Xem giỏ hàng</Link></p>}
     </div>}
   </section>;

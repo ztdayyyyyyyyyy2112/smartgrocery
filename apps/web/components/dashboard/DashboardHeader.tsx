@@ -47,7 +47,7 @@ export default function DashboardHeader() {
               <p className="text-xs text-muted">{storeName || "Cửa hàng của tôi"}</p>
             </div>
           </div>
-          <button type="button" onClick={() => { logout(); router.push("/"); }} className="rounded-lg border px-3 py-2 text-sm">Đăng xuất</button>
+          <button type="button" onClick={async () => { await logout(); router.push("/"); }} className="rounded-lg border px-3 py-2 text-sm">Đăng xuất</button>
         </div>
       </div>
     </header>
