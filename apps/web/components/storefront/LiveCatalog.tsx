@@ -1,10 +1,12 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { addToCart, api, money, saveSelectedStore, selectedStore, type Product, type Store } from "../../lib/demo";
+import { addToCart, api, money, saveSelectedStore, selectedStore, session, type Product, type Store } from "../../lib/demo";
 
 export default function LiveCatalog({ compact = false }: { compact?: boolean }) {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
   const [storeId, setStoreId] = useState("");
@@ -12,6 +14,7 @@ export default function LiveCatalog({ compact = false }: { compact?: boolean }) 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
+  useEffect(() => { queueMicrotask(() => setSearch(new URLSearchParams(window.location.search).get("q") || "")); const onSearch = (event: Event) => setSearch((event as CustomEvent<string>).detail); window.addEventListener("smartgrocery:search", onSearch); return () => window.removeEventListener("smartgrocery:search", onSearch); }, []);
   useEffect(() => { api<Store[]>("/api/v1/stores").then(data => { const demo = data.filter(x => /^S\d+$/.test(x.code)); setStores(demo); const id = demo.some(x => x.id === selectedStore()) ? selectedStore() : demo[0]?.id || ""; setStoreId(id); if (!selectedStore() && id) localStorage.setItem("smartgrocery.demo.store", id); }).catch(err => setError(err.message)); }, []);
   useEffect(() => { if (!storeId) return;
     api<{ items: Product[] }>(`/api/v1/products?page_size=100&store_id=${storeId}`)
@@ -23,7 +26,7 @@ export default function LiveCatalog({ compact = false }: { compact?: boolean }) 
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div><p className="text-sm font-semibold uppercase text-primary-dark">Sản phẩm theo cửa hàng</p>
         <h1 className="mt-2 text-3xl font-bold text-foreground">Sản phẩm SmartGrocery</h1></div>
-      <label>Cửa hàng đang mua <select value={storeId} onChange={e => { saveSelectedStore(e.target.value); setLoading(true); setStoreId(e.target.value); }} className="ml-2 rounded-lg border p-2">{stores.map(store => <option key={store.id} value={store.id}>{store.code} · {store.name}</option>)}</select></label>
+      <label>Cửa hàng đang mua <select value={storeId} onChange={e => { const nextStore = e.target.value; void saveSelectedStore(nextStore).then(() => { setLoading(true); setStoreId(nextStore); }).catch(err => setError(err.message)); }} className="ml-2 rounded-lg border p-2">{stores.map(store => <option key={store.id} value={store.id}>{store.code} · {store.name}</option>)}</select></label>
       <input aria-label="Tìm sản phẩm" value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm tên hoặc SKU" className="rounded-xl border border-border px-4 py-3" />
     </div>
     {notice && <p role="status" className="mt-4 text-primary-dark">{notice}</p>}
@@ -37,7 +40,7 @@ export default function LiveCatalog({ compact = false }: { compact?: boolean }) 
         <Link href={`/products/${product.id}`} className="mt-2 text-xl font-semibold hover:text-primary">{product.name}</Link>
         <p className="mt-2 text-sm text-muted">Tồn khả dụng: {product.available_qty} {product.unit}</p>
         <p className="mt-3 text-lg font-bold text-primary-dark">{money(product.selling_price)}</p>
-        <button type="button" disabled={Number(product.available_qty) <= 0} onClick={() => { addToCart(product); setNotice(`Đã thêm ${product.name} vào giỏ`); }} className="mt-auto rounded-xl bg-primary px-4 py-2.5 font-semibold text-white disabled:opacity-50">Thêm vào giỏ</button>
+        <button type="button" disabled={Number(product.available_qty) <= 0} onClick={() => { if (session()?.user.role !== "customer") { router.push("/login"); return; } void addToCart(product).then(() => setNotice(`Đã thêm ${product.name} vào giỏ`)).catch(err => setError(err.message)); }} className="mt-auto rounded-xl bg-primary px-4 py-2.5 font-semibold text-white disabled:opacity-50">Thêm vào giỏ</button>
       </article>)}
     </div>
     {compact && <Link href="/products" className="mt-6 inline-block font-semibold text-primary-dark underline">Xem tất cả sản phẩm →</Link>}

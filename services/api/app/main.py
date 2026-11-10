@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.db.session import database_is_connected
 from app.api.auth import router as auth_router
 from app.api.catalog import router as catalog_router
+from app.api.cart import router as cart_router
 from app.api.orders import router as orders_router
 from app.api.inventory import router as inventory_router
 from app.api.procurement import router as procurement_router
@@ -55,6 +56,7 @@ app.add_middleware(
 )
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(catalog_router, prefix="/api/v1")
+app.include_router(cart_router, prefix="/api/v1")
 app.include_router(orders_router, prefix="/api/v1")
 app.include_router(inventory_router, prefix="/api/v1")
 app.include_router(procurement_router, prefix="/api/v1")

@@ -99,6 +99,8 @@ def seed_intelligence_catalog(db) -> None:
             linked_products.add(product_id)
     password = os.getenv("SG_DEMO_PASSWORD", "DemoPass123!")
     for email, role in (("merchant@smartgrocery.example.com", UserRole.MERCHANT),
+                        ("merchant.thuduc@smartgrocery.example.com", UserRole.MERCHANT),
+                        ("merchant.binhthanh@smartgrocery.example.com", UserRole.MERCHANT),
                         ("customer@smartgrocery.example.com", UserRole.CUSTOMER)):
         existing = db.scalar(select(User).where(User.email == email))
         if existing is None:
@@ -110,9 +112,12 @@ def seed_intelligence_catalog(db) -> None:
             existing.phone = existing.phone or "0900000000"
             existing.default_address = existing.default_address or "1 Demo Street, Ho Chi Minh City"
     db.flush()
-    demo_store = db.scalar(select(Store).where(Store.code == "S001"))
-    if demo_store is not None and demo_store.merchant_id is None:
-        demo_store.merchant_id = db.scalar(select(User.id).where(User.email == "merchant@smartgrocery.example.com"))
+    for code, email in (("S001", "merchant@smartgrocery.example.com"),
+                        ("S002", "merchant.thuduc@smartgrocery.example.com"),
+                        ("S003", "merchant.binhthanh@smartgrocery.example.com")):
+        demo_store = db.scalar(select(Store).where(Store.code == code))
+        if demo_store is not None and demo_store.merchant_id is None:
+            demo_store.merchant_id = db.scalar(select(User.id).where(User.email == email))
 
 
 def seed() -> None:

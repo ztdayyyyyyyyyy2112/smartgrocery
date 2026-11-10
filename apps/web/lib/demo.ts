@@ -13,30 +13,61 @@ export type Supplier = { id: string; name: string; lead_time_days: number };
 export type PurchaseOrder = { id: string; store_id: string; supplier_id: string; status: string; items?: { product_id: string; quantity_ordered: string; quantity_received: string; unit_cost: string }[] };
 
 const SESSION_KEY = "smartgrocery.demo.session";
-const CART_KEY = "smartgrocery.demo.cart";
 const STORE_KEY = "smartgrocery.demo.store";
+let cartCache: CartItem[] = [];
+let cartAccountId: string | null = null;
 
 export function session(): Session | null {
   if (typeof window === "undefined") return null;
   try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch { return null; }
 }
-export function saveSession(value: Session) { localStorage.setItem(SESSION_KEY, JSON.stringify({ user: { ...value.user, phone: null, default_address: null } })); window.dispatchEvent(new Event("smartgrocery:session")); }
-export function logout() { void fetch(`${API_URL}/api/v1/auth/logout`, { method: "POST", credentials: "include" }); localStorage.removeItem(SESSION_KEY); window.dispatchEvent(new Event("smartgrocery:session")); }
+export function saveSession(value: Session) { if (session()?.user.id !== value.user.id) { cartCache = []; cartAccountId = null; window.dispatchEvent(new Event("smartgrocery:cart")); } localStorage.setItem(SESSION_KEY, JSON.stringify({ user: { ...value.user, phone: null, default_address: null } })); window.dispatchEvent(new Event("smartgrocery:session")); }
+export async function logout() { try { await fetch(`${API_URL}/api/v1/auth/logout`, { method: "POST", credentials: "include" }); } catch { /* Clear this browser's account display even when offline. */ } finally { localStorage.removeItem(SESSION_KEY); localStorage.removeItem("smartgrocery.demo.cart"); cartCache = []; cartAccountId = null; window.dispatchEvent(new Event("smartgrocery:cart")); window.dispatchEvent(new Event("smartgrocery:session")); } }
 export function selectedStore() { return typeof window === "undefined" ? "" : localStorage.getItem(STORE_KEY) || ""; }
-export function saveSelectedStore(id: string) { localStorage.setItem(STORE_KEY, id); saveCart([]); window.dispatchEvent(new Event("smartgrocery:store")); }
-export function cart(): CartItem[] {
-  if (typeof window === "undefined") return [];
-  try { return JSON.parse(localStorage.getItem(CART_KEY) || "[]"); } catch { return []; }
+export async function saveSelectedStore(id: string) {
+  if (session()?.user.role === "customer") {
+    await api("/api/v1/cart", { method: "PUT", body: JSON.stringify({ store_id: id, items: [] }) });
+    cartCache = [];
+    cartAccountId = session()?.user.id || null;
+    window.dispatchEvent(new Event("smartgrocery:cart"));
+  }
+  localStorage.setItem(STORE_KEY, id);
+  window.dispatchEvent(new Event("smartgrocery:store"));
 }
-export function saveCart(items: CartItem[]) { localStorage.setItem(CART_KEY, JSON.stringify(items)); window.dispatchEvent(new Event("smartgrocery:cart")); }
-export function addToCart(product: Product) {
-  const items = cart();
+export function cart(): CartItem[] {
+  const account = session()?.user;
+  return account?.role === "customer" && account.id === cartAccountId ? cartCache : [];
+}
+export async function loadCart() {
+  if (session()?.user.role !== "customer") { cartCache = []; cartAccountId = null; window.dispatchEvent(new Event("smartgrocery:cart")); return []; }
+  const accountId = session()?.user.id;
+  const result = await api<{ store_id: string | null; items: CartItem[] }>("/api/v1/cart");
+  if (session()?.user.id !== accountId) return cart();
+  cartCache = result.items;
+  cartAccountId = accountId || null;
+  if (result.store_id) localStorage.setItem(STORE_KEY, result.store_id);
+  window.dispatchEvent(new Event("smartgrocery:cart"));
+  return cartCache;
+}
+export async function saveCart(items: CartItem[]) {
+  if (session()?.user.role !== "customer") throw new Error("Đăng nhập bằng tài khoản khách hàng để dùng giỏ hàng.");
+  const accountId = session()?.user.id;
+  const storeId = selectedStore();
+  if (!storeId) throw new Error("Hãy chọn cửa hàng trước.");
+  const result = await api<{ items: CartItem[] }>("/api/v1/cart", { method: "PUT", body: JSON.stringify({ store_id: storeId, items: items.map(item => ({ product_id: item.product.id, quantity: item.quantity })) }) });
+  if (session()?.user.id !== accountId) return cart();
+  cartCache = result.items;
+  cartAccountId = accountId || null;
+  window.dispatchEvent(new Event("smartgrocery:cart"));
+  return cartCache;
+}
+export async function addToCart(product: Product) {
+  const items = cart().map(item => ({ ...item }));
   const existing = items.find(item => item.product.id === product.id);
   if (existing) existing.quantity = Math.min(existing.quantity + 1, Number(product.available_qty));
   else items.push({ product, quantity: 1 });
-  saveCart(items);
+  return saveCart(items);
 }
-export function removeFromCart(id: string) { saveCart(cart().filter(item => item.product.id !== id)); }
 export function money(value: string | number) { return `${Number(value).toLocaleString("vi-VN")}₫`; }
 
 export async function api<T>(path: string, options: RequestInit = {}, retry = true): Promise<T> {
@@ -50,7 +81,7 @@ export async function api<T>(path: string, options: RequestInit = {}, retry = tr
   if (response.status === 401 && retry && current && !path.startsWith("/api/v1/auth/")) {
     const refreshed = await fetch(`${API_URL}/api/v1/auth/refresh`, { method: "POST", headers: { "X-SG-Browser-Session": "1" }, credentials: "include" });
     if (refreshed.ok) { saveSession(await refreshed.json()); return api<T>(path, options, false); }
-    logout();
+    void logout();
   }
   const body = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(typeof body.detail === "string" ? body.detail : `API trả lỗi ${response.status}`);

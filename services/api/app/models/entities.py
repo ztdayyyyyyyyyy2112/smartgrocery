@@ -172,6 +172,16 @@ class StockLedgerEntry(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"), nullable=False)
 
 
+class ShoppingCartItem(Base):
+    __tablename__ = "shopping_cart_items"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    product_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("products.id"), primary_key=True)
+    store_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("stores.id"), nullable=False)
+    quantity: Mapped[int] = mapped_column(nullable=False)
+    __table_args__ = (CheckConstraint("quantity > 0", name="ck_cart_quantity_positive"),)
+
+
 class Order(TimestampMixin, Base):
     __tablename__ = "orders"
 

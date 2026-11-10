@@ -6,12 +6,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel, Field
-from sqlalchemy import func, or_, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.events import enqueue_event
-from app.models import IdempotencyKey, InventoryBatch, Order, OrderItem, OrderStatus, Product, StockEventType, StockLedgerEntry, StockReservation, UserRole
+from app.models import IdempotencyKey, InventoryBatch, Order, OrderItem, OrderStatus, Product, ShoppingCartItem, StockEventType, StockLedgerEntry, StockReservation, UserRole
 from app.security import current_user, require_roles
 from app.store_access import ensure_store_access, merchant_store_id
 
@@ -131,6 +131,7 @@ def create_order(payload: CreateOrderRequest, idempotency_key: str = Header(...,
                     db.add(StockLedgerEntry(store_id=payload.store_id, product_id=product.id, batch_id=batch.id, event_type=StockEventType.RESERVE, quantity_delta=amount, reference_type="order", reference_id=order.id, created_by=user.id))
             response = _order_body(order, order_items)
             enqueue_event(db, event_type="order.confirmed", aggregate_type="order", aggregate_id=order.id, payload={"id": str(order.id), "store_id": str(order.store_id), "status": order.status.value})
+            db.execute(delete(ShoppingCartItem).where(ShoppingCartItem.user_id == user.id, ShoppingCartItem.store_id == payload.store_id))
             db.add(IdempotencyKey(key=idempotency_key, user_id=user.id, request_hash=request_hash, response_code=201, response_body=response, expires_at=datetime.now(timezone.utc) + timedelta(days=7)))
             return response
     except HTTPException:
