@@ -48,24 +48,21 @@ def test_checkout_to_forecast_to_receiving_flow() -> None:
 
 def _catalog_ids():
     with SessionLocal() as db:
-        store = db.scalar(select(Store).limit(1))
-        product = db.scalar(select(Product).limit(1))
+        store = db.scalar(select(Store).where(Store.code == "S001"))
+        product = db.scalar(select(Product).where(Product.sku == "SKU001"))
         assert store is not None and product is not None
         return store.id, product.id
 
 
 def _merchant_token() -> str:
     with SessionLocal() as db:
-        user = User(email=f"e2e-merchant-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="E2E Merchant", role=UserRole.MERCHANT)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        user = db.scalar(select(User).where(User.email == "merchant@smartgrocery.example.com"))
         return create_token(user, token_type="access", expires_delta=timedelta(minutes=15))
 
 
 def _customer_token() -> str:
     with SessionLocal() as db:
-        user = User(email=f"e2e-customer-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="E2E Customer", role=UserRole.CUSTOMER)
+        user = User(email=f"e2e-customer-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="E2E Customer", role=UserRole.CUSTOMER, phone="0900000000", default_address="1 Demo Street")
         db.add(user)
         db.commit()
         db.refresh(user)
@@ -74,7 +71,8 @@ def _customer_token() -> str:
 
 def _supplier_id(product_id):
     with SessionLocal() as db:
-        supplier = Supplier(name=f"E2E Supplier {uuid4().hex[:6]}")
+        store = db.scalar(select(Store).where(Store.code == "S001"))
+        supplier = Supplier(name=f"E2E Supplier {uuid4().hex[:6]}", store_id=store.id)
         db.add(supplier)
         db.flush()
         db.add(SupplierProduct(supplier_id=supplier.id, product_id=product_id, unit_cost=12000))

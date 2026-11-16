@@ -14,14 +14,18 @@ PRODUCT_ID = "00000000-0000-0000-0000-000000001003"
 
 
 def merchant_token() -> str:
-    email = f"procurement-{uuid4().hex}@example.com"
-    client.post("/api/v1/auth/register", json={"email": email, "password": "password123", "full_name": "Procurement Test"})
-    login = client.post("/api/v1/auth/login", json={"email": email, "password": "password123"})
-    token = login.json()["access_token"]
-    user_id = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"}).json()["id"]
+    from app.models import Store
+    from app.security import create_token, hash_password
     with SessionLocal.begin() as db:
-        db.scalar(select(User).where(User.id == user_id)).role = UserRole.MERCHANT
-    return token
+        from uuid import UUID
+        store = db.get(Store, UUID(STORE_ID))
+        user = db.get(User, store.merchant_id) if store.merchant_id else None
+        if user is None:
+            user = User(email=f"procurement-{uuid4().hex}@example.com", password_hash=hash_password("password123"), full_name="Procurement Merchant", role=UserRole.MERCHANT)
+            db.add(user)
+            db.flush()
+            store.merchant_id = user.id
+        return create_token(user, token_type="access", expires_delta=timedelta(minutes=15))
 
 
 def test_purchase_order_lifecycle_and_receiving() -> None:
@@ -64,7 +68,7 @@ def test_cancel_purchase_order() -> None:
 
 def test_customer_cannot_access_procurement() -> None:
     email = f"customer-procurement-{uuid4().hex}@example.com"
-    client.post("/api/v1/auth/register", json={"email": email, "password": "password123", "full_name": "Customer"})
+    client.post("/api/v1/auth/register", json={"email": email, "password": "password123", "full_name": "Customer", "phone": "0900000000", "default_address": "1 Demo Street", "privacy_consent": True})
     token = client.post("/api/v1/auth/login", json={"email": email, "password": "password123"}).json()["access_token"]
     response = client.get("/api/v1/suppliers", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 403

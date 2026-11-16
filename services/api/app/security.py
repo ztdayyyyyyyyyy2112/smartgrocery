@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from pwdlib import PasswordHash
 from sqlalchemy import select
@@ -13,7 +13,7 @@ from app.db.session import get_db
 from app.models import User, UserRole
 
 password_hash = PasswordHash.recommended()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
 def hash_password(password: str) -> str:
@@ -30,10 +30,10 @@ def create_token(user: User, *, token_type: str, expires_delta: timedelta) -> st
     return jwt.encode(payload, get_settings().jwt_secret_key.get_secret_value(), algorithm="HS256")
 
 
-def current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+def current_user(request: Request, token: str | None = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     credentials_error = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication credentials")
     try:
-        payload = jwt.decode(token, get_settings().jwt_secret_key.get_secret_value(), algorithms=["HS256"])
+        payload = jwt.decode(token or request.cookies.get("sg_access") or "", get_settings().jwt_secret_key.get_secret_value(), algorithms=["HS256"])
         user_id = payload.get("sub")
         if payload.get("type") != "access" or not user_id:
             raise credentials_error

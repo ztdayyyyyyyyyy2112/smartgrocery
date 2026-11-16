@@ -21,7 +21,7 @@ def test_concurrent_checkout_cannot_oversell_single_unit() -> None:
         db.add(product)
         db.flush()
         db.add(InventoryBatch(store_id=store.id, product_id=product.id, lot_code=f"CONC-{uuid4().hex}", quantity_on_hand=Decimal("1"), quantity_reserved=Decimal("0")))
-        users = [User(email=f"concurrency-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="Concurrency User", role=UserRole.CUSTOMER) for _ in range(2)]
+        users = [User(email=f"concurrency-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="Concurrency User", role=UserRole.CUSTOMER, phone="0900000000", default_address="1 Demo Street") for _ in range(2)]
         db.add_all(users)
         db.commit()
         store_id, product_id = str(store.id), str(product.id)
@@ -52,9 +52,10 @@ def test_merchant_only_endpoints_enforce_auth_and_role() -> None:
 
 def test_rbac_matrix_covers_merchant_success_inactive_and_not_found() -> None:
     with SessionLocal() as db:
-        merchant = User(email=f"rbac-merchant-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="RBAC Merchant", role=UserRole.MERCHANT)
+        from sqlalchemy import select
+        merchant = db.scalar(select(User).where(User.email == "merchant@smartgrocery.example.com"))
         inactive = User(email=f"rbac-inactive-{uuid4()}@example.com", password_hash=hash_password("password123"), full_name="RBAC Inactive", role=UserRole.MERCHANT, is_active=False)
-        db.add_all([merchant, inactive])
+        db.add(inactive)
         db.commit()
         db.refresh(merchant)
         db.refresh(inactive)

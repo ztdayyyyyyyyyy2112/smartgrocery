@@ -39,7 +39,9 @@ def main():
     store = next(item for item in call("/stores") if item["code"] == "S001")
     product = next(item for item in call("/products?page_size=100")["items"] if item["sku"] == "SKU005")
     stock_before = next(item for item in call(f"/inventory?store_id={store['id']}", token=merchant) if item["sku"] == "SKU005")
-    order = call("/orders", "POST", {"store_id": store["id"], "items": [{"product_id": product["id"], "quantity": 1}]},
+    order = call("/orders", "POST", {"store_id": store["id"], "recipient_name": "Demo Customer",
+                 "delivery_phone": "0900000000", "delivery_address": "1 Demo Street, Ho Chi Minh City",
+                 "items": [{"product_id": product["id"], "quantity": 1}]},
                  customer, str(uuid.uuid4()))
     assert order["status"] == "confirmed"
     stock_reserved = next(item for item in call(f"/inventory?store_id={store['id']}", token=merchant) if item["sku"] == "SKU005")
@@ -54,7 +56,9 @@ def main():
     forecast = call(f"/forecasts?store_id={store['id']}&product_id={product['id']}", token=merchant)
     assert len(forecast) >= 7
     recommendation = next(item for item in call(f"/recommendations?store_id={store['id']}", token=merchant)
-                          if item["product_id"] == product["id"] and item["status"] == "pending")
+                          if item["status"] == "pending")
+    replenishment_before = next(item for item in call(f"/inventory?store_id={store['id']}", token=merchant)
+                                if item["product_id"] == recommendation["product_id"])
     supplier = next(item for item in call("/suppliers", token=merchant) if item["name"] == "SmartGrocery Demo Supplier")
     po_id = call(f"/recommendations/{recommendation['id']}/approve", "POST",
                  {"convert_to_po": True, "supplier_id": supplier["id"]}, merchant)["purchase_order_id"]
@@ -62,12 +66,13 @@ def main():
     call(f"/purchase-orders/{po_id}/send", "POST", token=merchant)
     po = call(f"/purchase-orders/{po_id}", token=merchant)
     line = po["items"][0]
-    receipt = call(f"/purchase-orders/{po_id}/receive", "POST", {"items": [{"product_id": product["id"],
+    receipt = call(f"/purchase-orders/{po_id}/receive", "POST", {"items": [{"product_id": line["product_id"],
                    "quantity": line["quantity_ordered"], "unit_cost": line["unit_cost"],
                    "lot_code": f"SMOKE-{uuid.uuid4().hex}"}]}, merchant)
     assert receipt["status"] == "received"
-    stock_after = next(item for item in call(f"/inventory?store_id={store['id']}", token=merchant) if item["sku"] == "SKU005")
-    assert float(stock_after["on_hand"]) > float(stock_before["on_hand"])
+    replenishment_after = next(item for item in call(f"/inventory?store_id={store['id']}", token=merchant)
+                               if item["product_id"] == recommendation["product_id"])
+    assert float(replenishment_after["on_hand"]) > float(replenishment_before["on_hand"])
     print("DEMO PASS: checkout -> reserved stock -> AI job -> recommendation -> PO -> receiving -> increased stock")
 
 

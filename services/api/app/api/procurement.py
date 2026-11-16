@@ -11,6 +11,7 @@ from app.db.session import get_db
 from app.events import enqueue_event
 from app.models import GoodsReceipt, InventoryBatch, Product, PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus, StockEventType, StockLedgerEntry, Supplier, SupplierProduct, UserRole
 from app.security import require_roles
+from app.store_access import ensure_store_access, merchant_store_id
 
 router = APIRouter(tags=["procurement"])
 merchant_admin = require_roles(UserRole.MERCHANT, UserRole.ADMIN)
@@ -68,12 +69,18 @@ class SupplierProductRequest(BaseModel):
 
 @router.get("/suppliers", response_model=list[SupplierResponse])
 def list_suppliers(db: Session = Depends(get_db), _user=Depends(merchant_admin)) -> list[SupplierResponse]:
-    return list(db.scalars(select(Supplier).where(Supplier.is_active.is_(True)).order_by(Supplier.name)).all())
+    stmt = select(Supplier).where(Supplier.is_active.is_(True)).order_by(Supplier.name)
+    owned = merchant_store_id(db, _user)
+    if owned is not None: stmt = stmt.where(Supplier.store_id == owned)
+    return list(db.scalars(stmt).all())
 
 
 @router.post("/suppliers", status_code=201, response_model=SupplierResponse)
 def create_supplier(payload: SupplierRequest, db: Session = Depends(get_db), _user=Depends(merchant_admin)) -> SupplierResponse:
-    supplier = Supplier(**payload.model_dump())
+    owned = merchant_store_id(db, _user)
+    if owned is None:
+        raise HTTPException(status_code=422, detail="Choose a store before creating a supplier")
+    supplier = Supplier(**payload.model_dump(), store_id=owned)
     db.add(supplier)
     db.commit()
     db.refresh(supplier)
@@ -82,8 +89,10 @@ def create_supplier(payload: SupplierRequest, db: Session = Depends(get_db), _us
 
 @router.put("/suppliers/{supplier_id}/products")
 def upsert_supplier_product(supplier_id: UUID, payload: SupplierProductRequest, db: Session = Depends(get_db), _user=Depends(merchant_admin)) -> dict:
-    if db.get(Supplier, supplier_id) is None or db.get(Product, payload.product_id) is None:
+    supplier = db.get(Supplier, supplier_id)
+    if supplier is None or db.get(Product, payload.product_id) is None:
         raise HTTPException(status_code=404, detail="Supplier or product not found")
+    ensure_store_access(db, _user, supplier.store_id)
     item = db.get(SupplierProduct, (supplier_id, payload.product_id))
     if item is None:
         item = SupplierProduct(supplier_id=supplier_id, **payload.model_dump())
@@ -98,8 +107,10 @@ def upsert_supplier_product(supplier_id: UUID, payload: SupplierProductRequest, 
 
 @router.get("/suppliers/{supplier_id}/products")
 def list_supplier_products(supplier_id: UUID, db: Session = Depends(get_db), _user=Depends(merchant_admin)) -> list[dict]:
-    if db.get(Supplier, supplier_id) is None:
+    supplier = db.get(Supplier, supplier_id)
+    if supplier is None:
         raise HTTPException(status_code=404, detail="Supplier not found")
+    ensure_store_access(db, _user, supplier.store_id)
     items = db.scalars(select(SupplierProduct).where(SupplierProduct.supplier_id == supplier_id)).all()
     return [{"supplier_id": str(item.supplier_id), "product_id": str(item.product_id), "supplier_sku": item.supplier_sku, "unit_cost": str(item.unit_cost), "min_order_qty": str(item.min_order_qty)} for item in items]
 
@@ -108,7 +119,9 @@ def list_supplier_products(supplier_id: UUID, db: Session = Depends(get_db), _us
 def create_purchase_order(payload: PORequest, db: Session = Depends(get_db), user=Depends(merchant_admin)) -> dict:
     db.rollback()
     with db.begin():
-        if db.get(Supplier, payload.supplier_id) is None:
+        ensure_store_access(db, user, payload.store_id)
+        supplier = db.get(Supplier, payload.supplier_id)
+        if supplier is None or supplier.store_id != payload.store_id:
             raise HTTPException(status_code=404, detail="Supplier not found")
         po = PurchaseOrder(store_id=payload.store_id, supplier_id=payload.supplier_id, created_by=user.id, status=PurchaseOrderStatus.PENDING_APPROVAL, notes=payload.notes)
         db.add(po)
@@ -124,7 +137,10 @@ def create_purchase_order(payload: PORequest, db: Session = Depends(get_db), use
 
 @router.get("/purchase-orders")
 def list_purchase_orders(db: Session = Depends(get_db), _user=Depends(merchant_admin)) -> list[dict]:
-    orders = db.scalars(select(PurchaseOrder).order_by(PurchaseOrder.created_at.desc())).all()
+    stmt = select(PurchaseOrder).order_by(PurchaseOrder.created_at.desc())
+    owned = merchant_store_id(db, _user)
+    if owned is not None: stmt = stmt.where(PurchaseOrder.store_id == owned)
+    orders = db.scalars(stmt).all()
     return [{"id": str(po.id), "status": po.status.value, "store_id": str(po.store_id), "supplier_id": str(po.supplier_id)} for po in orders]
 
 
@@ -133,6 +149,7 @@ def get_purchase_order(po_id: UUID, db: Session = Depends(get_db), _user=Depends
     po = db.get(PurchaseOrder, po_id)
     if po is None:
         raise HTTPException(status_code=404, detail="Purchase order not found")
+    ensure_store_access(db, _user, po.store_id)
     items = db.scalars(select(PurchaseOrderItem).where(PurchaseOrderItem.purchase_order_id == po_id)).all()
     return {"id": str(po.id), "status": po.status.value, "store_id": str(po.store_id),
             "supplier_id": str(po.supplier_id), "items": [
@@ -147,12 +164,13 @@ def _transition(po_id: UUID, expected: PurchaseOrderStatus, target: PurchaseOrde
         po = db.scalar(select(PurchaseOrder).where(PurchaseOrder.id == po_id).with_for_update())
         if po is None:
             raise HTTPException(status_code=404, detail="Purchase order not found")
+        ensure_store_access(db, user, po.store_id)
         if po.status != expected:
             raise HTTPException(status_code=409, detail="Invalid purchase order state")
         po.status = target
         if approval:
             po.approved_by = user.id
-        response = {"id": str(po.id), "status": po.status.value}
+        response = {"id": str(po.id), "status": po.status.value, "store_id": str(po.store_id)}
         enqueue_event(db, event_type=f"purchase_order.{target.value}", aggregate_type="purchase_order", aggregate_id=po.id, payload=response)
         return response
 
@@ -174,10 +192,11 @@ def cancel_purchase_order(po_id: UUID, db: Session = Depends(get_db), user=Depen
         po = db.scalar(select(PurchaseOrder).where(PurchaseOrder.id == po_id).with_for_update())
         if po is None:
             raise HTTPException(status_code=404, detail="Purchase order not found")
+        ensure_store_access(db, user, po.store_id)
         if po.status not in {PurchaseOrderStatus.DRAFT, PurchaseOrderStatus.PENDING_APPROVAL, PurchaseOrderStatus.APPROVED, PurchaseOrderStatus.SENT}:
             raise HTTPException(status_code=409, detail="Purchase order cannot be cancelled")
         po.status = PurchaseOrderStatus.CANCELLED
-        response = {"id": str(po.id), "status": po.status.value}
+        response = {"id": str(po.id), "status": po.status.value, "store_id": str(po.store_id)}
         enqueue_event(db, event_type="purchase_order.cancelled", aggregate_type="purchase_order", aggregate_id=po.id, payload=response)
         return response
 
@@ -189,6 +208,7 @@ def receive_purchase_order(po_id: UUID, payload: ReceiveRequest, db: Session = D
         po = db.scalar(select(PurchaseOrder).where(PurchaseOrder.id == po_id).with_for_update())
         if po is None:
             raise HTTPException(status_code=404, detail="Purchase order not found")
+        ensure_store_access(db, user, po.store_id)
         if po.status not in {PurchaseOrderStatus.SENT, PurchaseOrderStatus.PARTIALLY_RECEIVED}:
             raise HTTPException(status_code=409, detail="Purchase order is not receivable")
         items = {item.product_id: item for item in db.scalars(select(PurchaseOrderItem).where(PurchaseOrderItem.purchase_order_id == po.id).with_for_update()).all()}
@@ -205,6 +225,6 @@ def receive_purchase_order(po_id: UUID, payload: ReceiveRequest, db: Session = D
             db.flush()
             db.add(StockLedgerEntry(store_id=po.store_id, product_id=received.product_id, batch_id=batch.id, event_type=StockEventType.RECEIVE, quantity_delta=received.quantity, reference_type="purchase_order", reference_id=po.id, created_by=user.id))
         po.status = PurchaseOrderStatus.RECEIVED if all(item.quantity_received == item.quantity_ordered for item in items.values()) else PurchaseOrderStatus.PARTIALLY_RECEIVED
-        response = {"id": str(po.id), "status": po.status.value, "receipt_id": str(receipt.id)}
+        response = {"id": str(po.id), "status": po.status.value, "store_id": str(po.store_id), "receipt_id": str(receipt.id)}
         enqueue_event(db, event_type="purchase_order.received", aggregate_type="purchase_order", aggregate_id=po.id, payload=response)
         return response
