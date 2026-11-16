@@ -17,7 +17,7 @@ The first build trains the AI model from reproducible synthetic data and may tak
 1. Choose store `S001`. Log in as `customer@smartgrocery.example.com` / `DemoPass123!`. Add `SKU005` to cart, check the red cart count, enter recipient/phone/address, and check out. Order history should show the store and delivery details.
 2. Log out and log in as `merchant@smartgrocery.example.com` / `DemoPass123!`. This merchant belongs to `S001`. Dashboard Orders shows delivery details; Inventory shows `SKU005` with less available stock due to reservation. Orders can fulfil the order to decrease physical stock.
 3. Go to Forecasting and run the 7-day job. Wait for `succeeded`. Forecast rows should be visible; their history cutoff is 09/11/2026.
-4. Go to Recommendations, approve the pending `SKU005` recommendation and create a PO. Go to Procurement, approve → send → receive the PO. Inventory should increase.
+4. Go to Recommendations, approve a pending recommendation and create a PO. `SKU005` may have no recommendation after earlier demo receipts increase its stock. Go to Procurement, approve → send → receive the PO. Inventory for the product in that PO should increase.
 
 The automated smoke test performs the same API sequence and prints `DEMO PASS`. It uses synthetic sales history and a local demo catalog; it does not process payments. `docker compose down` stops services while keeping data. `docker compose down -v` intentionally removes the demo database and Redis data.
 
