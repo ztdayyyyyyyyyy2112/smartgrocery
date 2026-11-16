@@ -30,7 +30,7 @@ export default function HeroSection() {
   useEffect(() => {
     const timer = window.setInterval(
       () => setActive((previous) => (previous + 1) % banners.length),
-      4500,
+      3000,
     );
     return () => window.clearInterval(timer);
   }, []);
@@ -76,6 +76,7 @@ export default function HeroSection() {
                       alt={banner.alt}
                       fill
                       priority={index === 0}
+                      unoptimized
                       sizes="(max-width: 1024px) 100vw, 850px"
                       className="object-contain"
                     />
@@ -128,6 +129,7 @@ export default function HeroSection() {
                     src={banner.src}
                     alt={banner.alt}
                     fill
+                    unoptimized
                     sizes="(max-width: 1024px) 50vw, 400px"
                     className="object-cover"
                   />
@@ -178,6 +180,7 @@ export default function HeroSection() {
               width={1254}
               height={1254}
               priority
+              unoptimized
               sizes="(max-width: 520px) 92vw, 520px"
               className="max-h-[70vh] w-full rounded-lg object-contain"
             />

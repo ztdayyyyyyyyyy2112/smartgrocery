@@ -64,7 +64,9 @@ export default function Navbar() {
         <div className="sg-container flex min-h-8 items-center justify-between gap-3 py-1 text-xs">
           <span className="hidden sm:inline">Mua sắm thông minh cùng SmartGrocery</span>
           {current ? (
-            <span className="ml-auto truncate">Xin chào, {current.user.full_name}</span>
+            <span className="ml-auto truncate">
+              Xin chào, {current.user.full_name} · {current.user.role === "customer" ? "Khách hàng" : current.user.role === "merchant" ? "Người bán" : "Quản trị"}
+            </span>
           ) : (
             <Link href="/login" className="ml-auto hover:underline">
               Đăng nhập / Đăng ký
